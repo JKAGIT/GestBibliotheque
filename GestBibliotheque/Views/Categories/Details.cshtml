@@ -1,0 +1,47 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@{
+}
+@model Categories
+
+<h2>Détails de la catégorie</h2>
+
+<div>
+    <p><strong>Code :</strong> @Model.Code</p>
+</div>
+<div>
+    <p><strong>Nom :</strong> @Model.Libelle</p>
+</div>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Titre</th>
+            <th>Auteur</th>
+            <th>Stock</th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (Model.Livres != null && Model.Livres.Any())
+        {
+            <h5>Livres associés à cette catégorie</h5>
+            @foreach (var livre in Model.Livres)
+            {
+                <tr>
+                    <td>@livre.Titre</td>
+                    <td>@livre.Auteur</td>
+                    <td>@livre.Stock</td>
+                </tr>
+            }
+        }
+        else
+        {
+            <tr>
+                <td colspan="3">Aucun livre dans cette catégorie</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<a asp-action="Index">Retour à la liste des catégories</a>
+

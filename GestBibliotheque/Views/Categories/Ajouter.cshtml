@@ -1,0 +1,53 @@
+﻿ @model Categories
+
+<h1>Ajouter une Catégorie</h1>
+
+<form asp-action="Ajouter" method="post">
+    @if (!ViewData.ModelState.IsValid)
+    {
+        <div class="alert alert-danger">
+            <strong>Erreurs :</strong>
+            @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+            {
+                <p>@error.ErrorMessage</p>
+            }
+        </div>
+    }
+    <div class="form-group">
+        <label asp-for="Code"></label>
+        <input asp-for="Code" class="form-control" />
+        <span asp-validation-for="Code" class="text-danger"></span>
+    </div>
+    <div class="form-group">
+        <label asp-for="Libelle"></label>
+        <input asp-for="Libelle" class="form-control" id="Libelle" oninput="generateCode()" />
+        <span asp-validation-for="Libelle" class="text-danger"></span>
+    </div>
+    <button type="submit" class="btn btn-primary">Ajouter</button>
+</form>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jquery-validation@1.19.3/dist/jquery.validate.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jquery-validation-unobtrusive@3.2.12/dist/jquery.validate.unobtrusive.min.js"></script>
+
+    <script>
+               function generateCode() {
+            // Récupère la valeur du champ Libelle
+            const inputValue = document.getElementById('Libelle').value.trim();
+
+            // Si le champ est vide, on arrête la fonction
+            if (inputValue === '') {
+                document.getElementById('Code').value = '';
+                return;
+            }
+
+            // Prend les 4 premiers caractères du premier mot
+            const code = inputValue.split(' ')[0].substring(0, 3).toUpperCase();
+
+            // Affecte le code généré au champ Code
+            document.getElementById('Code').value = code;
+        }
+                        </script>
+}
+ 

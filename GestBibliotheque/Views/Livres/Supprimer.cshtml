@@ -1,0 +1,35 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@{
+}
+
+@model Livres
+
+@if (!ViewData.ModelState.IsValid)
+{
+    <div class="alert alert-danger">
+        <strong>Erreurs :</strong>
+        @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+        {
+            <p>@error.ErrorMessage</p>
+        }
+    </div>
+}
+
+
+<h1>Supprimer un Livre</h1>
+
+<h3>Êtes-vous sûr de vouloir supprimer ce livre ?</h3>
+
+<div>
+    <p><strong>@Model.Titre</strong> par @Model.Auteur</p>
+    <p>Stock : @Model.Stock</p>
+    <p>Catégorie : @Model.Categories?.Libelle</p>
+</div>
+
+<form asp-action="SupprimerConfirmation" method="post">
+    <input type="hidden" name="id" value="@Model.ID" />
+    <button type="submit" class="btn btn-danger">Supprimer</button>
+    <a href="@Url.Action("Index")" class="btn btn-secondary">Annuler</a>
+</form>
