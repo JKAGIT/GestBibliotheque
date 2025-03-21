@@ -18,3 +18,37 @@ function filtreLivres() {
         }
     }
 }
+
+// Status des Emprunts + badge approprié
+function afficherStatutEmprunt(datePrevu, elementId) {
+    if (typeof datePrevu === 'string') {
+        datePrevu = new Date(datePrevu);
+    }
+
+    const maintenant = new Date();
+    const element = document.getElementById(elementId);
+
+    if (datePrevu < maintenant) {
+        element.innerHTML = '<span class="badge bg-danger">En retard</span>';
+    } else {
+        element.innerHTML = '<span class="badge bg-success">À jour</span>';
+    }
+}
+
+// Fonction pour initialiser plusieurs statuts d'emprunts en utilisant des attributs data
+function initialiserStatutsEmprunts() {
+    document.querySelectorAll('[data-date-prevu]').forEach(function (element) {
+        const datePrevu = new Date(element.getAttribute('data-date-prevu'));
+
+        if (datePrevu < new Date()) {
+            element.innerHTML = '<span class="badge bg-danger">En retard</span>';
+        } else {
+            element.innerHTML = '<span class="badge bg-success">À jour</span>';
+        }
+    });
+}
+
+// Exécuter l'initialisation au chargement de la page
+document.addEventListener('DOMContentLoaded', function () {
+    initialiserStatutsEmprunts();
+});

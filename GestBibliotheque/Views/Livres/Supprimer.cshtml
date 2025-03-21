@@ -6,30 +6,21 @@
 
 @model Livres
 
-@if (!ViewData.ModelState.IsValid)
-{
-    <div class="alert alert-danger">
-        <strong>Erreurs :</strong>
-        @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
-        {
-            <p>@error.ErrorMessage</p>
-        }
+<div asp-validation-summary="All" class="text-danger"></div>
+
+
+<div class="container mt-4">
+    <h2>Supprimer un Livre</h2>
+
+    <div class="alert alert-warning" role="alert">
+        <strong>Attention!</strong> Êtes-vous sûr de vouloir supprimer ce livre?
     </div>
-}
 
 
-<h1>Supprimer un Livre</h1>
+    <form asp-action="SupprimerConfirmation" method="post">
+        <input type="hidden" asp-for="ID" />
+        <button type="submit" class="btn btn-danger">Supprimer</button>
+        <a href="@Url.Action("Index", "Livres")" class="btn btn-secondary">Annuler</a>
+    </form>
 
-<h3>Êtes-vous sûr de vouloir supprimer ce livre ?</h3>
-
-<div>
-    <p><strong>@Model.Titre</strong> par @Model.Auteur</p>
-    <p>Stock : @Model.Stock</p>
-    <p>Catégorie : @Model.Categories?.Libelle</p>
 </div>
-
-<form asp-action="SupprimerConfirmation" method="post">
-    <input type="hidden" name="id" value="@Model.ID" />
-    <button type="submit" class="btn btn-danger">Supprimer</button>
-    <a href="@Url.Action("Index")" class="btn btn-secondary">Annuler</a>
-</form>

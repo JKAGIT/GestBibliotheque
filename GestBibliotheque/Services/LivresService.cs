@@ -15,14 +15,19 @@ namespace GestBibliotheque.Services
             _unitOfWork = unitOfWork;
         }
 
+        private async Task<bool> LivreExiste(string titre)
+        {
+            var livreExistant = await _unitOfWork.Livres.FindAsync(l => l.Titre == titre);
+            return livreExistant.Any();
+        }
         public async Task AjouterLivre(Livres livre)
         {
             if (livre == null)
                 throw new ArgumentNullException(nameof(livre), "Le livre ne peut pas être nul. Assurez-vous que toutes les données sont correctement fournies.");
 
-            var livreeExiste = await _unitOfWork.Livres.FindAsync(l => l.Titre == livre.Titre);
-            if (livreeExiste.Any())
-                throw new InvalidOperationException($"Un livre avec le même titre {livre.Titre} existe déjà.");
+
+            if (await LivreExiste(livre.Titre))
+                throw new InvalidOperationException($"Un livre avec le même titre '{livre.Titre}' existe déjà.");
 
             await _unitOfWork.Livres.AddAsync(livre);
             await _unitOfWork.CompleteAsync();
@@ -81,21 +86,16 @@ namespace GestBibliotheque.Services
             return await _unitOfWork.Livres.FindAsync(l => l.IDCategorie == idCategorie);
         }
 
-        public async Task<IEnumerable<Livres>> ObtenirLivresParAuteur(string auteur)
-        {
-            return await _unitOfWork.Livres.FindAsync(l => l.Auteur.Contains(auteur));
-        }
-
         public async Task<IEnumerable<Livres>> ObtenirLivresEnStock()
         {
             return await _unitOfWork.Livres.FindAsync(l => l.Stock > 0);
         }
-        public async Task<IEnumerable<Livres>> ObtenirLivres()
+        public async Task<IEnumerable<Livres>> ObtenirLivres()  //lazy loading
         {
-            return await _unitOfWork.Livres.GetAllAsync();             
+            return await _unitOfWork.Livres.GetAllAsync();
         }
 
-        public async Task<IEnumerable<Livres>> ObtenirLivresAvecCategories()
+        public async Task<IEnumerable<Livres>> ObtenirLivresAvecCategories()   //eager loading
         {
             return await _unitOfWork.Livres
                 .GetAll()

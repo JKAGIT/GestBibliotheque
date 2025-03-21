@@ -8,6 +8,9 @@
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/GestBibliotheque.styles.css" asp-append-version="true" />
+
+
+
 </head>
 <body>
     <header>
@@ -21,11 +24,11 @@
                 <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
                     <ul class="navbar-nav flex-grow-1">
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
+                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Accueil</a>
                         </li>
-                        
+
                         <li class="nav-item">
-                        <li><a class="nav-link text-dark" asp-controller="Categories" asp-action="Index">Catégories</a></li>                        
+                        <li><a class="nav-link text-dark" asp-controller="Categories" asp-action="Index">Catégories</a></li>
 
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle" href="#" id="livresDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
@@ -34,12 +37,41 @@
                             <ul class="dropdown-menu" aria-labelledby="livresDropdown">
                                 <li><a class="dropdown-item" href="@Url.Action("Index", "Livres")">Liste des Livres</a></li>
                                 <li><a class="dropdown-item" href="@Url.Action("Ajouter", "Livres")">Ajouter un Livre</a></li>
-                                <li><a class="dropdown-item" href="@Url.Action("AjouterStock", "LivresOperations")">Ajout Stock</a></li>
-                                <li><a class="dropdown-item" href="@Url.Action("VerifierDisponibilite", "LivresOperations")">Vérifier Disponibilité </a></li>  
-                                <li><a class="dropdown-item" href="@Url.Action("LivresEnStock", "LivresOperations")">Livres Disponible </a></li>
-
                             </ul>
                         </li>
+
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="actionsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                Emprunts
+                            </a>
+                            <ul class="dropdown-menu" aria-labelledby="actionsDropdown">
+                                <li><a class="dropdown-item" href="@Url.Action("Index", "Emprunts")">Gestion des emprunts </a></li>
+                                <li><a class="dropdown-item" href="@Url.Action("Ajouter", "Emprunts")">Emprunter un livre </a></li>
+                                <li><a class="dropdown-item" href="@Url.Action("RechercherEmprunt", "Retours")">Retourner un livre </a></li>                                
+                                <li><a class="dropdown-item" href="@Url.Action("EmpruntActif", "Retours")">Emprunts Actifs </a></li>
+                                <li><a class="dropdown-item" href="@Url.Action("EmpruntInActif", "Retours")">Emprunts inactifs </a></li>
+                            </ul>
+                        </li>
+
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="actionsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                Actions
+                            </a>
+                            <ul class="dropdown-menu" aria-labelledby="actionsDropdown">
+
+                                <li><a class="dropdown-item" href="@Url.Action("AjouterStock", "LivresOperations")">Gestion Stock</a></li>
+                                <li><a class="dropdown-item" href="@Url.Action("VerifierDisponibilite", "LivresOperations")">Vérifier Disponibilité </a></li>
+                                <li><a class="dropdown-item" href="@Url.Action("LivresEnStock", "LivresOperations")">Livres Disponible </a></li>
+                                <li><a class="dropdown-item" href="@Url.Action("Index", "Reservations")">Gestion des réservations </a></li>
+                            </ul>
+                        </li>
+
+
+                        <li class="nav-item">
+                        <li><a class="nav-link text-dark" asp-controller="Utilisateurs" asp-action="Index">Utilisateurs</a></li>
+                        <li class="nav-item">
+                        <li><a class="nav-link text-dark" asp-controller="Usagers" asp-action="Index">Usagers</a></li>
+
                         <li class="nav-item">
                             <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
                         </li>

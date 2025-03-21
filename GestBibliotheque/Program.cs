@@ -16,11 +16,19 @@ builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
 builder.Services.AddScoped<CategoriesService>();
 builder.Services.AddScoped<LivresService>();
+builder.Services.AddScoped<UtilisateursService>();
+builder.Services.AddScoped<GenerateurMatriculeUnique>();
+builder.Services.AddScoped<UsagersService>();
+builder.Services.AddScoped<EmpruntsService>();
+builder.Services.AddScoped<RetoursService>();
 
-//builder.Services.AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme)
-//    .AddMicrosoftIdentityWebApp(builder.Configuration.GetSection("AzureAd"));
+builder.Services.AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme)
+    .AddMicrosoftIdentityWebApp(builder.Configuration.GetSection("AzureAd"));
 
-
+//builder.Services.AddAuthorization(options =>
+//{
+//    options.FallbackPolicy = options.DefaultPolicy;
+//});
 
 
 // Add services to the container.
@@ -41,8 +49,8 @@ if (!app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseRouting();
 
-//app.UseAuthorization();
-//app.UseAuthentication();
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.MapStaticAssets();
 

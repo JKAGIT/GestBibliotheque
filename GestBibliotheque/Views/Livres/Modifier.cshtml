@@ -8,17 +8,9 @@
 
 <h1>Modifier un Livre</h1>
 
-<form asp-action="Modifier" method="post">
-    @if (!ViewData.ModelState.IsValid)
-    {
-        <div class="alert alert-danger">
-            <strong>Erreurs :</strong>
-            @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
-            {
-                <p>@error.ErrorMessage</p>
-            }
-        </div>
-    }
+<form asp-action="Modifier" method="post">   
+    <div asp-validation-summary="All" class="text-danger"></div>
+
     <div class="form-group">
         <label for="Titre">Titre</label>
         <input type="text" class="form-control" id="Titre" name="Titre" value="@Model.Titre" required />
@@ -39,5 +31,6 @@
         <label asp-for="IDCategorie">Catégorie</label>
         <select asp-for="IDCategorie" asp-items="@(ViewBag.Categories)" class="form-control"></select>
     </div>
+    <a href="@Url.Action("Index", "Livres")" class="btn btn-secondary">Annuler</a>
     <button type="submit" class="btn btn-primary">Modifier</button>
 </form>

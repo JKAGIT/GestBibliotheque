@@ -19,11 +19,13 @@ namespace GestBibliotheque.Controllers
             _categoriesService = categoriesService;
         }
 
+        [HttpGet]
         public async Task<IActionResult> Index()
         {
             var livres = await _livresService.ObtenirLivresAvecCategories();
             return View(livres);
         }
+        [HttpGet]
         public async Task<IActionResult> Details(Guid id)
         {
             var livre = await _livresService.ObtenirLivreParId(id);
@@ -77,7 +79,7 @@ namespace GestBibliotheque.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Modifier(Livres livre)
-        {
+        {            
             if (ModelState.IsValid)
             {
                 try
@@ -103,6 +105,8 @@ namespace GestBibliotheque.Controllers
             return View(livre);
         }
 
+        [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> SupprimerConfirmation(Guid id)
         {
             try
