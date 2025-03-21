@@ -18,13 +18,12 @@ namespace GestBibliotheque.Controllers
         }
 
 
-        // Exemple d'une méthode utilitaire pour obtenir une catégorie par son ID
-        //private async Task<Categories> ObtenirCategorieOuNotFound(Guid id)
-        //{
-        //    var categorie = await _categoriesService.ObtenirCategorieParId(id);
-        //    if (categorie == null) return NotFound();
-        //    return categorie;
-        //}
+        private async Task<Categories> ObtenirCategorie(Guid id)
+        {
+            var categorie = await _categoriesService.ObtenirCategorieParId(id);
+            if (categorie == null) return null;
+            return categorie;
+        }
 
         public async Task<IActionResult> Index()
         {
@@ -33,7 +32,7 @@ namespace GestBibliotheque.Controllers
         }
         public async Task<IActionResult> Details(Guid id)
         {
-            var categories = await _categoriesService.ObtenirCategorieParId(id);
+            var categories = await ObtenirCategorie(id);
             if (categories == null) return NotFound();
 
             var livres = await _livresService.ObtenirLivresParCategorie(id);
@@ -69,7 +68,7 @@ namespace GestBibliotheque.Controllers
 
         public async Task<IActionResult> Modifier(Guid id)
         {
-            var categorie = await _categoriesService.ObtenirCategorieParId(id);
+            var categorie = await ObtenirCategorie(id);
             if (categorie == null) return NotFound();
             return View(categorie);
         }
@@ -95,7 +94,7 @@ namespace GestBibliotheque.Controllers
 
         public async Task<IActionResult> Supprimer(Guid id)
         {
-            var categorie = await _categoriesService.ObtenirCategorieParId(id);
+            var categorie = await ObtenirCategorie(id);
             if (categorie == null)
             {
                 return NotFound();
@@ -115,7 +114,7 @@ namespace GestBibliotheque.Controllers
             catch (Exception ex)
             {
                 GestionErreurs.GererErreur(ex, this);
-                var categorie = await _categoriesService.ObtenirCategorieParId(id);
+                var categorie = await ObtenirCategorie(id);
                 return View("Supprimer", categorie);
             }
         }

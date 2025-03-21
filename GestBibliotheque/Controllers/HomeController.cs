@@ -4,7 +4,7 @@ using GestBibliotheque.Models;
 using Microsoft.AspNetCore.Authorization;
 
 namespace GestBibliotheque.Controllers;
-
+  [Authorize]
 public class HomeController : Controller
 {
     private readonly ILogger<HomeController> _logger;
@@ -14,7 +14,7 @@ public class HomeController : Controller
         _logger = logger;
     }
 
-    //[Authorize]
+  
     public IActionResult Index()
     {
         return View();

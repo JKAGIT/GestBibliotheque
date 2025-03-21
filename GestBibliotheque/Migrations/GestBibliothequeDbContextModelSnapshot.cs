@@ -30,7 +30,8 @@ namespace GestBibliotheque.Migrations
 
                     b.Property<string>("Code")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(4)
+                        .HasColumnType("nvarchar(4)");
 
                     b.Property<string>("Libelle")
                         .IsRequired()
@@ -39,6 +40,36 @@ namespace GestBibliotheque.Migrations
                     b.HasKey("ID");
 
                     b.ToTable("Categories");
+                });
+
+            modelBuilder.Entity("GestBibliotheque.Models.Emprunts", b =>
+                {
+                    b.Property<Guid>("ID")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("DateDebut")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("DateRetourPrevue")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("IDLivre")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("IDReservation")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("IDUsager")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("ID");
+
+                    b.HasIndex("IDLivre");
+
+                    b.HasIndex("IDUsager");
+
+                    b.ToTable("Emprunts");
                 });
 
             modelBuilder.Entity("GestBibliotheque.Models.Livres", b =>
@@ -71,6 +102,110 @@ namespace GestBibliotheque.Migrations
                     b.ToTable("Livres");
                 });
 
+            modelBuilder.Entity("GestBibliotheque.Models.Retours", b =>
+                {
+                    b.Property<Guid>("ID")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("DateRetour")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("IDEmprunt")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("ID");
+
+                    b.HasIndex("IDEmprunt")
+                        .IsUnique();
+
+                    b.ToTable("Retours");
+                });
+
+            modelBuilder.Entity("GestBibliotheque.Models.Usagers", b =>
+                {
+                    b.Property<Guid>("ID")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Courriel")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Nom")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("Prenoms")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Telephone")
+                        .IsRequired()
+                        .HasMaxLength(12)
+                        .HasColumnType("nvarchar(12)");
+
+                    b.HasKey("ID");
+
+                    b.ToTable("Usagers");
+                });
+
+            modelBuilder.Entity("GestBibliotheque.Models.Utilisateurs", b =>
+                {
+                    b.Property<Guid>("ID")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Courriel")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Matricule")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
+
+                    b.Property<string>("Nom")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("Prenoms")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Telephone")
+                        .IsRequired()
+                        .HasMaxLength(12)
+                        .HasColumnType("nvarchar(12)");
+
+                    b.HasKey("ID");
+
+                    b.ToTable("Utilisateurs");
+                });
+
+            modelBuilder.Entity("GestBibliotheque.Models.Emprunts", b =>
+                {
+                    b.HasOne("GestBibliotheque.Models.Livres", "Livre")
+                        .WithMany("Emprunts")
+                        .HasForeignKey("IDLivre")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("GestBibliotheque.Models.Usagers", "Usager")
+                        .WithMany("Emprunts")
+                        .HasForeignKey("IDUsager")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Livre");
+
+                    b.Navigation("Usager");
+                });
+
             modelBuilder.Entity("GestBibliotheque.Models.Livres", b =>
                 {
                     b.HasOne("GestBibliotheque.Models.Categories", "Categories")
@@ -82,9 +217,35 @@ namespace GestBibliotheque.Migrations
                     b.Navigation("Categories");
                 });
 
+            modelBuilder.Entity("GestBibliotheque.Models.Retours", b =>
+                {
+                    b.HasOne("GestBibliotheque.Models.Emprunts", "Emprunt")
+                        .WithOne("Retours")
+                        .HasForeignKey("GestBibliotheque.Models.Retours", "IDEmprunt")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Emprunt");
+                });
+
             modelBuilder.Entity("GestBibliotheque.Models.Categories", b =>
                 {
                     b.Navigation("Livres");
+                });
+
+            modelBuilder.Entity("GestBibliotheque.Models.Emprunts", b =>
+                {
+                    b.Navigation("Retours");
+                });
+
+            modelBuilder.Entity("GestBibliotheque.Models.Livres", b =>
+                {
+                    b.Navigation("Emprunts");
+                });
+
+            modelBuilder.Entity("GestBibliotheque.Models.Usagers", b =>
+                {
+                    b.Navigation("Emprunts");
                 });
 #pragma warning restore 612, 618
         }

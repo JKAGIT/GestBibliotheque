@@ -22,6 +22,8 @@ namespace GestBibliotheque.Models
 
         [ForeignKey("Categorie")] 
         public Guid IDCategorie { get; set; }
-        public Categories? Categories { get; set; } 
+        public Categories? Categories { get; set; }
+
+        public ICollection<Emprunts> Emprunts { get; set; } = new List<Emprunts>();
     }
 }

@@ -23,6 +23,7 @@
         <input asp-for="Libelle" class="form-control" id="Libelle" oninput="generateCode()" />
         <span asp-validation-for="Libelle" class="text-danger"></span>
     </div>
+    <a href="@Url.Action("Index", "Categories")" class="btn btn-secondary">Annuler</a>
     <button type="submit" class="btn btn-primary">Ajouter</button>
 </form>
 
@@ -32,22 +33,15 @@
     <script src="https://cdn.jsdelivr.net/npm/jquery-validation-unobtrusive@3.2.12/dist/jquery.validate.unobtrusive.min.js"></script>
 
     <script>
-               function generateCode() {
-            // Récupère la valeur du champ Libelle
+        function generateCode() {
             const inputValue = document.getElementById('Libelle').value.trim();
-
-            // Si le champ est vide, on arrête la fonction
             if (inputValue === '') {
                 document.getElementById('Code').value = '';
                 return;
             }
 
-            // Prend les 4 premiers caractères du premier mot
-            const code = inputValue.split(' ')[0].substring(0, 3).toUpperCase();
-
-            // Affecte le code généré au champ Code
+            const code = inputValue.split(' ')[0].substring(0, 4).toUpperCase();
             document.getElementById('Code').value = code;
         }
-                        </script>
+    </script>
 }
- 
