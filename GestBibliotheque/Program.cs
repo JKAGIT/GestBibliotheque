@@ -21,6 +21,7 @@ builder.Services.AddScoped<GenerateurMatriculeUnique>();
 builder.Services.AddScoped<UsagersService>();
 builder.Services.AddScoped<EmpruntsService>();
 builder.Services.AddScoped<RetoursService>();
+builder.Services.AddScoped<ReservationsService>();
 
 builder.Services.AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme)
     .AddMicrosoftIdentityWebApp(builder.Configuration.GetSection("AzureAd"));

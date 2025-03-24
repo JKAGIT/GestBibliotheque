@@ -4,6 +4,7 @@ using GestBibliotheque.Donnee;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace GestBibliotheque.Migrations
 {
     [DbContext(typeof(GestBibliothequeDbContext))]
-    partial class GestBibliothequeDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250323045407_AjoutTableReservations")]
+    partial class AjoutTableReservations
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -121,7 +124,7 @@ namespace GestBibliotheque.Migrations
                     b.Property<DateTime>("DateRetourEstimee")
                         .HasColumnType("datetime2");
 
-                    b.Property<Guid>("IDLivre")
+                    b.Property<Guid?>("IDLivre")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid>("IDUsager")
@@ -263,8 +266,7 @@ namespace GestBibliotheque.Migrations
                     b.HasOne("GestBibliotheque.Models.Livres", "Livre")
                         .WithMany("Reservations")
                         .HasForeignKey("IDLivre")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("GestBibliotheque.Models.Usagers", "Usager")
                         .WithMany("Reservations")

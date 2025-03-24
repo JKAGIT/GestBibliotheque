@@ -1,5 +1,5 @@
 ﻿<!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -8,9 +8,6 @@
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/GestBibliotheque.styles.css" asp-append-version="true" />
-
-
-
 </head>
 <body>
     <header>
@@ -39,6 +36,8 @@
                                 <li><a class="dropdown-item" href="@Url.Action("Ajouter", "Livres")">Ajouter un Livre</a></li>
                             </ul>
                         </li>
+                        <li class="nav-item">
+                        <li><a class="nav-link text-dark" asp-controller="Reservations" asp-action="Index">Réservations</a></li>
 
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle" href="#" id="actionsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
@@ -47,7 +46,7 @@
                             <ul class="dropdown-menu" aria-labelledby="actionsDropdown">
                                 <li><a class="dropdown-item" href="@Url.Action("Index", "Emprunts")">Gestion des emprunts </a></li>
                                 <li><a class="dropdown-item" href="@Url.Action("Ajouter", "Emprunts")">Emprunter un livre </a></li>
-                                <li><a class="dropdown-item" href="@Url.Action("RechercherEmprunt", "Retours")">Retourner un livre </a></li>                                
+                                <li><a class="dropdown-item" href="@Url.Action("RechercherEmprunt", "Retours")">Retourner un livre </a></li>
                                 <li><a class="dropdown-item" href="@Url.Action("EmpruntActif", "Retours")">Emprunts Actifs </a></li>
                                 <li><a class="dropdown-item" href="@Url.Action("EmpruntInActif", "Retours")">Emprunts inactifs </a></li>
                             </ul>
@@ -58,14 +57,11 @@
                                 Actions
                             </a>
                             <ul class="dropdown-menu" aria-labelledby="actionsDropdown">
-
                                 <li><a class="dropdown-item" href="@Url.Action("AjouterStock", "LivresOperations")">Gestion Stock</a></li>
                                 <li><a class="dropdown-item" href="@Url.Action("VerifierDisponibilite", "LivresOperations")">Vérifier Disponibilité </a></li>
                                 <li><a class="dropdown-item" href="@Url.Action("LivresEnStock", "LivresOperations")">Livres Disponible </a></li>
-                                <li><a class="dropdown-item" href="@Url.Action("Index", "Reservations")">Gestion des réservations </a></li>
                             </ul>
                         </li>
-
 
                         <li class="nav-item">
                         <li><a class="nav-link text-dark" asp-controller="Utilisateurs" asp-action="Index">Utilisateurs</a></li>
@@ -75,8 +71,6 @@
                         <li class="nav-item">
                             <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
                         </li>
-
-
                     </ul>
                 </div>
             </div>
@@ -93,10 +87,13 @@
             &copy; 2025 - GestBibliotheque - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
         </div>
     </footer>
+
+    <!-- Les scripts généraux sont maintenant chargés ici dans le layout -->
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+
+    <!-- La section Scripts est maintenant incluse ici et peut être remplie par les pages individuelles -->
     @await RenderSectionAsync("Scripts", required: false)
-    <script src="~/js/site.js"></script>
 </body>
 </html>

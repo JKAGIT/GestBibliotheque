@@ -1,5 +1,6 @@
 ﻿using GestBibliotheque.Models;
 using GestBibliotheque.Repositories;
+using GestBibliotheque.Utilitaires;
 using Microsoft.EntityFrameworkCore;
 
 namespace GestBibliotheque.Services
@@ -15,26 +16,23 @@ namespace GestBibliotheque.Services
 
         public async Task AjouterCategorie(Categories categorie)
         {
-            if (categorie == null)
-                throw new ArgumentNullException(nameof(categorie), "La catégorie ne peut pas être nulle. Assurez-vous que toutes les données sont correctement fournies.");
+            ValidationService.VerifierNull(categorie, nameof(categorie), "La catégorie");
 
-            var categorieExiste = await _unitOfWork.Categories.FindAsync(c => c.Code == categorie.Code);
-            if (categorieExiste.Any())
-            {
-                throw new InvalidOperationException($"Une catégorie avec le code {categorie.Code} existe déjà.");
-            }
+            if (await _unitOfWork.Categories.EntiteExiste(c => c.Code == categorie.Code))
+                throw new InvalidOperationException(string.Format(ErreurMessage.EntiteExisteDeja, "Une catégorie", categorie.Code));
+
+            // throw new Exception("Erreur simulée dans le service lors de l'ajout de la catégorie.");
 
             await _unitOfWork.Categories.AddAsync(categorie);
             await _unitOfWork.CompleteAsync();
+
         }
         public async Task ModifierCategorie(Categories categorie)
         {
-            if (categorie == null)
-                throw new ArgumentNullException(nameof(categorie), "La catégorie à modifier ne peut pas être nulle. Assurez-vous que toutes les données sont correctement fournies.");
+            ValidationService.VerifierNull(categorie, nameof(categorie), "La catégorie");
 
             var categorieAModifier = await _unitOfWork.Categories.GetByIdAsync(categorie.ID);
-            if (categorieAModifier == null)
-                throw new KeyNotFoundException($"La catégorie avec l'ID {categorie.ID} n'a pas été trouvée.");
+            ValidationService.EnregistrementNonTrouve(categorieAModifier, "Categories", categorie.ID);
 
             await _unitOfWork.Categories.UpdateAsync(categorie);
             await _unitOfWork.CompleteAsync();
@@ -47,11 +45,10 @@ namespace GestBibliotheque.Services
                                             .Include(c => c.Livres)
                                             .FirstOrDefaultAsync(c => c.ID == idCategorie);
 
-            if (categorieASupprimer == null)
-                throw new KeyNotFoundException("La catégorie à supprimer est introuvable.");
+            ValidationService.EnregistrementNonTrouve(categorieASupprimer, "Categories", idCategorie);
 
             if (categorieASupprimer.Livres != null && categorieASupprimer.Livres.Any())
-                throw new InvalidOperationException("Impossible de supprimer une catégorie liée à des livres.");
+                throw new InvalidOperationException(string.Format(ErreurMessage.ErreurSuppressionEntiteLiee, "une catégorie", "livres"));
 
             await _unitOfWork.Categories.DeleteAsync(categorieASupprimer);
             await _unitOfWork.CompleteAsync();
@@ -59,26 +56,22 @@ namespace GestBibliotheque.Services
 
         public async Task<IEnumerable<Categories>> ObtenirCategories()
         {
-            return await _unitOfWork.Categories.GetAllAsync();
+            try
+            {
+                return await _unitOfWork.Categories.GetAllAsync();
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(string.Format(ErreurMessage.ErreurRecherche, "Categories"), ex);
+            }
         }
 
         public async Task<Categories> ObtenirCategorieParId(Guid idCategorie)
         {
-            return await _unitOfWork.Categories.GetByIdAsync(idCategorie);
-        }
-        public async Task<IEnumerable<Categories>> ObtenirCategoriesParCode(string code)
-        {
-            if (string.IsNullOrWhiteSpace(code))
-                throw new ArgumentException("Le code de la catégorie ne peut pas être vide.");
-
-            var result = await _unitOfWork.Categories.FindAsync(c => c.Code == code);
-
-            if (result == null || !result.Any())
-                throw new KeyNotFoundException($"Aucune catégorie trouvée avec le code : {code}");
-
-            return result;
+            var categorie = await _unitOfWork.Categories.GetByIdAsync(idCategorie);
+            ValidationService.EnregistrementNonTrouve(categorie, "Categories", idCategorie);
+            return categorie;
         }
     }
-
 
 }

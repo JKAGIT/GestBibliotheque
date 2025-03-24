@@ -16,6 +16,7 @@
             <th>Date emprunt</th>
          <th>Date retour prévue</th> 
             <th>Date retour </th>
+            <th>Statut</th>
             <th>Actions</th>
         </tr>
     </thead>
@@ -38,7 +39,7 @@
                 {
                     <td></td> @* Cellule vide sans texte *@
                 }
-              
+                <td data-date-prevu="@retour.DatePrevu.ToString("yyyy-MM-ddTHH:mm:ss")"></td>
                 <td>
                     <a href="@Url.Action("Modifier", "Emprunts", new { id = retour.IDEmprunt })">Modifier</a> |
                     <a href="@Url.Action("Supprimer", "Emprunts", new { id = retour.IDEmprunt })">Supprimer</a> |

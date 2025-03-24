@@ -2,6 +2,7 @@
 using GestBibliotheque.Donnee;
 using Microsoft.EntityFrameworkCore;
 using GestBibliotheque.Models;
+using GestBibliotheque.Utilitaires;
 
 namespace GestBibliotheque.Services
 {
@@ -18,16 +19,22 @@ namespace GestBibliotheque.Services
         {
             string matricule;
             bool matriculeExiste;
-
-            do
+            try
             {
-                matricule = GenererMatriculeAleatoire();
-                var result = await _unitOfWork.Utilisateurs.FindAsync(u => u.Matricule == matricule);
-                matriculeExiste = result.Any();
-            }
-            while (matriculeExiste);
+                do
+                {
+                    matricule = GenererMatriculeAleatoire();
+                    var result = await _unitOfWork.Utilisateurs.FindAsync(u => u.Matricule == matricule);
+                    matriculeExiste = result.Any();
+                }
+                while (matriculeExiste);
 
-            return matricule;
+                return matricule;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(string.Format(ErreurMessage.ErreurRecherche, ""), ex);
+            }
         }
 
         private string GenererMatriculeAleatoire()

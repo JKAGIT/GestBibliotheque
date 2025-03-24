@@ -1,5 +1,7 @@
 ﻿using GestBibliotheque.Models;
 using GestBibliotheque.Repositories;
+using GestBibliotheque.Utilitaires;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Model;
 
 namespace GestBibliotheque.Services
 {
@@ -13,15 +15,14 @@ namespace GestBibliotheque.Services
         }
         public async Task AjouterUtilisateur(Utilisateurs utilisateur)
         {
-            if (utilisateur == null)
-                throw new ArgumentNullException(nameof(utilisateur), "L'utilisateur ne peut pas être nul.");
+            ValidationService.VerifierNull(utilisateur, nameof(utilisateur), "L'utilisateur");
 
+            if (await _unitOfWork.Utilisateurs.EntiteExiste(u => u.Matricule == utilisateur.Matricule))
+                throw new InvalidOperationException(string.Format(ErreurMessage.EntiteExisteDeja, "Un utilisateur", utilisateur.Matricule));
 
-            var utilisateurExiste = await _unitOfWork.Utilisateurs.FindAsync(u => u.Matricule == utilisateur.Matricule);
-            if (utilisateurExiste.Any())
-            {
-                throw new InvalidOperationException($"Un utilisateur avec le matricule {utilisateur.Matricule} existe déjà.");
-            }           
+            if (await _unitOfWork.Utilisateurs.EntiteExiste(u => u.Courriel == utilisateur.Courriel))
+                throw new InvalidOperationException(string.Format(ErreurMessage.EntiteExisteDeja, "Un utilisateur", utilisateur.Courriel));
+
 
             await _unitOfWork.Utilisateurs.AddAsync(utilisateur);
             await _unitOfWork.CompleteAsync();
@@ -29,16 +30,10 @@ namespace GestBibliotheque.Services
 
         public async Task ModifierUtilisateur(Utilisateurs utilisateur)
         {
-            if (utilisateur == null)
-            {
-                throw new ArgumentNullException(nameof(utilisateur), "L'utilisateur à modifier ne peut pas être nul.");
-            }
+            ValidationService.VerifierNull(utilisateur, nameof(utilisateur), "L'utilisateur");
 
             var utilisateurAModifier = await _unitOfWork.Utilisateurs.GetByIdAsync(utilisateur.ID);
-            if (utilisateurAModifier == null)
-            {
-                throw new KeyNotFoundException($"L'utilisateur avec l'ID {utilisateur.ID} n'a pas été trouvé.");
-            }
+            ValidationService.EnregistrementNonTrouve(utilisateurAModifier, "Utilisateurs", utilisateur.ID);
 
             await _unitOfWork.Utilisateurs.UpdateAsync(utilisateur);
             await _unitOfWork.CompleteAsync();
@@ -47,10 +42,7 @@ namespace GestBibliotheque.Services
         public async Task SupprimerUtilisateur(Guid idUtilisateur)
         {
             var utilisateurASupprimer = await _unitOfWork.Utilisateurs.GetByIdAsync(idUtilisateur);
-            if (utilisateurASupprimer == null)
-            {
-                throw new KeyNotFoundException("L'utilisateur à supprimer n'a pas été trouvé.");
-            }
+            ValidationService.EnregistrementNonTrouve(utilisateurASupprimer, "Utilisateurs", idUtilisateur);
 
             await _unitOfWork.Utilisateurs.DeleteAsync(utilisateurASupprimer);
             await _unitOfWork.CompleteAsync();
@@ -59,15 +51,20 @@ namespace GestBibliotheque.Services
         public async Task<Utilisateurs> ObtenirUtilisateurParId(Guid idUtilisateur)
         {
             var utilisateur = await _unitOfWork.Utilisateurs.GetByIdAsync(idUtilisateur);
-            if (utilisateur == null)
-                throw new KeyNotFoundException($"L'utilisateur avec l'ID {idUtilisateur} n'a pas été trouvé.");
+            ValidationService.EnregistrementNonTrouve(utilisateur, "Utilisateurs", idUtilisateur);
             return utilisateur;
         }
 
         public async Task<IEnumerable<Utilisateurs>> ObtenirUtilisateurs()
         {
-            return await _unitOfWork.Utilisateurs.GetAllAsync();
+            try
+            {
+                return await _unitOfWork.Utilisateurs.GetAllAsync();
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(string.Format(ErreurMessage.ErreurRecherche, "Utilisateurs"), ex);
+            }
         }
-
     }
 }

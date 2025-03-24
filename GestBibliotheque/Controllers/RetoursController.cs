@@ -61,8 +61,8 @@ namespace GestBibliotheque.Controllers
             {
                 IDEmprunt = empruntId,
                 LivreTitre = livre.Titre,
-                UsagerNom = usager.Nom + " " + usager.Prenoms
-              //  DateRetour = DateTime.Now  
+                UsagerNom = usager.Nom + " " + usager.Prenoms,
+                DateRetour = DateTime.Now  
             };
 
             return View(viewModel);

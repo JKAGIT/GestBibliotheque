@@ -25,5 +25,7 @@ namespace GestBibliotheque.Models
         [MinLength(10, ErrorMessage = "Le numéro de téléphone doit comporter au moins 10 chiffres.")]
         public string Telephone { get; set; }
         public ICollection<Emprunts> Emprunts { get; set; } = new List<Emprunts>();
+        public ICollection<Reservations> Reservations { get; set; } = new List<Reservations>();  // Relation avec les réservations
+
     }
 }
