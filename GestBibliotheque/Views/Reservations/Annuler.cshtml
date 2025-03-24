@@ -1,9 +1,10 @@
-﻿@model IEnumerable<ReservationViewModel> 
+﻿@model IEnumerable<ReservationViewModel>
 
-<h2 class="text-center">Gestion des réservations</h2>
+<h2 class="text-center">Gestion des Réservations</h2>
 
-<a asp-action="Ajouter" class="btn btn-primary mb-3">Réserver un livre</a>
 <div class="table-responsive">
+    <div asp-validation-summary="All" class="text-danger"></div>
+
     <table class="table table-striped table-hover table-bordered">
         <thead>
             <tr>
@@ -12,7 +13,6 @@
                 <th>Date</th>
                 <th>Date retour prévue</th>
                 <th>Statut</th>
-                <th>livre dispo?</th>
                 <th>Actions</th>
             </tr>
         </thead>
@@ -24,17 +24,21 @@
                     <td>@reservation.LivreTitre</td>
                     <td>@reservation.DateDebut.ToString("yyyy-MM-dd")</td>
                     <td>@reservation.DatePrevue.ToString("yyyy-MM-dd")</td>
-                    <td data-date-prevu="@reservation.DatePrevue.ToString("yyyy-MM-ddTHH:mm:ss")"></td>
-                    <td>@(reservation.EstDisponible ? "Oui" : "Non")</td>
+                    <td>@(reservation.Annuler ? "Annulée" : "Active")</td>
                     <td>
-                        <a href="@Url.Action("Modifier", "Reservations", new { id = reservation.IdReservation })">Modifier</a> |
-                        <a href="@Url.Action("EmprunterViaReservation", "Emprunts", new { idReservation = reservation.IdReservation })">Emprunter</a>|
-                        <a href="@Url.Action("ConfirmerAnnulation", "Reservations", new { id = reservation.IdReservation })" class="btn btn-danger btn-sm">Annuler</a>
+                        @if (!reservation.Annuler)
+                        {
+                            <form method="post" asp-action="Annuler" asp-route-idReservation="@reservation.IdReservation">
+                                <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Êtes-vous sûr de vouloir annuler cette réservation ?')">Annuler</button>
+                            </form>
+                        }
+                        else
+                        {
+                            <span class="text-muted">Réservation annulée</span>
+                        }
                     </td>
                 </tr>
             }
         </tbody>
     </table>
 </div>
-
-

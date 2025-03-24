@@ -1,5 +1,6 @@
 ﻿using GestBibliotheque.Models;
 using GestBibliotheque.Repositories;
+using GestBibliotheque.Utilitaires;
 using Microsoft.EntityFrameworkCore;
 
 namespace GestBibliotheque.Services
@@ -19,22 +20,14 @@ namespace GestBibliotheque.Services
             _usagersService = usagersService;
         }
 
-        private void VerifierDateRetour(DateTime? dateRetour)
-        {
-            if (dateRetour == null || dateRetour == default)
-                throw new ArgumentNullException(nameof(dateRetour), "La date de retour doit être valide.");
-        }
         public async Task AjouterRetour(Retours retours)
         {
-            if (retours == null)
-                throw new ArgumentNullException(nameof(retours), "Le retour ne peut pas être nul.");
+            ValidationService.VerifierNull(retours, nameof(retours), "Le retour");
 
-            VerifierDateRetour(retours.DateRetour);
+            ValidationService.VerifierDate(retours.DateRetour, "de retour");
 
             var emprunt = await _empruntsService.ObtenirEmpruntParId(retours.IDEmprunt);
-            if (emprunt == null)
-                throw new ArgumentException("Emprunt non trouvé.");
-
+            ValidationService.EnregistrementNonTrouve(emprunt, "Emprunts", retours.IDEmprunt);
 
             var retour = new Retours
             {
@@ -48,12 +41,10 @@ namespace GestBibliotheque.Services
 
         public async Task ModifierRetour(Guid Id, DateTime nouvelleDateRetour)
         {
-
-            VerifierDateRetour(nouvelleDateRetour);
+            ValidationService.VerifierDate(nouvelleDateRetour, "de retour");
 
             var retour = await _unitOfWork.Retours.GetByIdAsync(Id);
-            if (retour == null)
-                throw new ArgumentException("Retour non trouvé.");
+            ValidationService.EnregistrementNonTrouve(retour, "Retours", Id);
 
             retour.DateRetour = nouvelleDateRetour;
 
@@ -64,119 +55,95 @@ namespace GestBibliotheque.Services
         public async Task<Retours> ObtenirRetourParId(Guid id)
         {
             var retours = await _unitOfWork.Retours.GetByIdAsync(id);
-            if (retours == null)
-                throw new KeyNotFoundException($"L'emprunt avec l'ID {id} n'a pas été trouvé.");
+            ValidationService.EnregistrementNonTrouve(retours, "Retours", id);
             return retours;
         }
 
-
-        //public async Task<IEnumerable<RetourViewModel>> ObtenirEmpruntsActif()
-        //{
-        //    var empruntsActifs = await _unitOfWork.Emprunts.GetAll()
-        //         .Include(e => e.Livre)
-        //         .Include(e => e.Usager)
-        //         .Where(e => e.Retours == null)
-        //         .ToListAsync();
-
-
-        //    var viewModel = empruntsActifs.Select(e => new RetourViewModel
-        //    {
-        //        IDEmprunt = e.ID,
-        //        LivreTitre = e.Livre.Titre,
-        //        UsagerNom = e.Usager.Nom + " " + e.Usager.Prenoms,
-        //        DateEmprunt = e.DateDebut,
-        //        DatePrevu = e.DateRetourPrevue
-        //    }).ToList();
-
-        //    return viewModel;
-        //}
-
-
-        //public async Task<IEnumerable<RetourViewModel>> ObtenirEmpruntsActif(Guid usagerId)
-        //{
-        //    var empruntsActifs = await _unitOfWork.Emprunts.GetAll()
-        //        .Include(e => e.Livre)
-        //        .Include(e => e.Usager)
-        //        .Where(e => e.Retours == null && e.IDUsager == usagerId)  
-        //        .ToListAsync();
-
-        //    var viewModel = empruntsActifs.Select(e => new RetourViewModel
-        //    {
-        //        IDEmprunt = e.ID,
-        //        LivreTitre = e.Livre.Titre,
-        //        UsagerNom = e.Usager.Nom + " " + e.Usager.Prenoms,
-        //        DateEmprunt = e.DateDebut,
-        //        DatePrevu = e.DateRetourPrevue
-        //    }).ToList();
-
-        //    return viewModel;
-        //}
-
-
         public async Task<IEnumerable<RetourViewModel>> ObtenirEmpruntsActif(Guid? usagerId = null)
         {
-            var empruntsActifsQuery = _unitOfWork.Emprunts.GetAll()
-                .Include(e => e.Livre)
-                .Include(e => e.Usager)
-                .Where(e => e.Retours == null); 
-
-
-            if (usagerId.HasValue)
+            try
             {
-                empruntsActifsQuery = empruntsActifsQuery.Where(e => e.IDUsager == usagerId.Value);
+                var empruntsActifsQuery = _unitOfWork.Emprunts.GetAll()
+                    .Include(e => e.Livre)
+                    .Include(e => e.Usager)
+                    .Where(e => e.Retours == null);
+
+
+                if (usagerId.HasValue)
+                {
+                    empruntsActifsQuery = empruntsActifsQuery.Where(e => e.IDUsager == usagerId.Value);
+                }
+
+                var empruntsActifs = await empruntsActifsQuery.ToListAsync();
+
+                var viewModel = empruntsActifs.Select(e => new RetourViewModel
+                {
+                    IDEmprunt = e.ID,
+                    LivreTitre = e.Livre.Titre,
+                    UsagerNom = e.Usager.Nom + " " + e.Usager.Prenoms,
+                    DateEmprunt = e.DateDebut,
+                    DatePrevu = e.DateRetourPrevue
+                }).ToList();
+
+                return viewModel;
             }
-
-            var empruntsActifs = await empruntsActifsQuery.ToListAsync();
-
-            var viewModel = empruntsActifs.Select(e => new RetourViewModel
+            catch (Exception ex)
             {
-                IDEmprunt = e.ID,
-                LivreTitre = e.Livre.Titre,
-                UsagerNom = e.Usager.Nom + " " + e.Usager.Prenoms,
-                DateEmprunt = e.DateDebut,
-                DatePrevu = e.DateRetourPrevue
-            }).ToList();
-
-            return viewModel;
+                throw new Exception(string.Format(ErreurMessage.ErreurRecherche, "Emprunts"), ex);
+            }
         }
-
-
 
         public async Task<IEnumerable<RetourViewModel>> ObtenirEmpruntsInActif()
         {
-            var retours = await _unitOfWork.Retours.GetAll()
-                .Include(r => r.Emprunt)
-                .ThenInclude(e => e.Livre)
-                .Include(r => r.Emprunt.Usager)
-                .Where(r => r.DateRetour != null)
-                .ToListAsync();
-
-            var viewModel = retours.Select(retour => new RetourViewModel
+            try
             {
-                IDEmprunt = retour.IDEmprunt,
-                LivreTitre = retour.Emprunt.Livre.Titre,
-                UsagerNom = retour.Emprunt.Usager.Nom + " " + retour.Emprunt.Usager.Prenoms,
-                DateRetour = retour.DateRetour,
-                DateEmprunt = retour.Emprunt.DateDebut,
-                DatePrevu = retour.Emprunt.DateRetourPrevue
-            }).ToList();
+                var retours = await _unitOfWork.Retours.GetAll()
+                    .Include(r => r.Emprunt)
+                    .ThenInclude(e => e.Livre)
+                    .Include(r => r.Emprunt.Usager)
+                    .Where(r => r.DateRetour != null)
+                    .ToListAsync();
 
-            return viewModel;
-        }
+                var viewModel = retours.Select(retour => new RetourViewModel
+                {
+                    IDEmprunt = retour.IDEmprunt,
+                    LivreTitre = retour.Emprunt.Livre.Titre,
+                    UsagerNom = retour.Emprunt.Usager.Nom + " " + retour.Emprunt.Usager.Prenoms,
+                    DateRetour = retour.DateRetour,
+                    DateEmprunt = retour.Emprunt.DateDebut,
+                    DatePrevu = retour.Emprunt.DateRetourPrevue
+                }).ToList();
 
-        // Méthode pour faire une recherche sur les emprunts (par titre de livre ou nom usager)
-        public IEnumerable<RetourViewModel> FiltrerEmpruntsParRecherche(IEnumerable<RetourViewModel> emprunts, string recherche)
-        {
-            if (!string.IsNullOrEmpty(recherche))
-            {
-                return emprunts.Where(e =>
-                    e.LivreTitre.Contains(recherche, StringComparison.OrdinalIgnoreCase) ||
-                    e.UsagerNom.Contains(recherche, StringComparison.OrdinalIgnoreCase)
-                ).ToList();
+                return viewModel;
             }
-
-            return emprunts;
+            catch (Exception ex)
+            {
+                throw new Exception(string.Format(ErreurMessage.ErreurRecherche, "Emprunts"), ex);
+            }
         }
 
+        /// <summary>
+        /// Filtre pour recherche des emprunts (par titre de livre ou nom usager)
+        /// </summary>
+        /// <returns></returns>
+        public IEnumerable<RetourViewModel> FiltrerEmpruntsParRecherche(IEnumerable<RetourViewModel> emprunts, string recherche)// 
+        {
+            try
+            {
+                if (!string.IsNullOrEmpty(recherche))
+                {
+                    return emprunts.Where(e =>
+                        e.LivreTitre.Contains(recherche, StringComparison.OrdinalIgnoreCase) ||
+                        e.UsagerNom.Contains(recherche, StringComparison.OrdinalIgnoreCase)
+                    ).ToList();
+                }
+
+                return emprunts;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(string.Format(ErreurMessage.ErreurRecherche, "Emprunts"), ex);
+            }
+        }
     }
 }

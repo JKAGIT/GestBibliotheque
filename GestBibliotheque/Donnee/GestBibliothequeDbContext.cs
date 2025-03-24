@@ -1,5 +1,9 @@
 ﻿using GestBibliotheque.Models;
 using Microsoft.EntityFrameworkCore;
+using static System.Net.Mime.MediaTypeNames;
+using System.Text;
+using System.Net;
+using System.Runtime.ConstrainedExecution;
 
 namespace GestBibliotheque.Donnee
 {
@@ -14,26 +18,33 @@ namespace GestBibliotheque.Donnee
         public DbSet<Usagers> Usagers { get; set; }
         public DbSet<Emprunts> Emprunts { get; set; }
         public DbSet<Retours> Retours { get; set; }
+        public DbSet<Reservations> Reservations { get; set; }   
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+              
+            ///HasOne(l => l.Categories) =un Livre est lié une seule catégorie associée. 
+            ///WithMany(c => c.Livres) : une catégorie peut être liée a plusieurs livres.
+            ///HasForeignKey(l => l.IDCategorie) : la clé étrangère de categorie dans livre.
+            ///OnDelete(DeleteBehavior.Restrict) : empêcher la suppression d'une categorie, si des livres sont associés  
 
             modelBuilder.Entity<Livres>()
-                .HasOne(l => l.Categories)
-                .WithMany(c => c.Livres)
+            .HasOne(l => l.Categories)
+            .WithMany(c => c.Livres)
                 .HasForeignKey(l => l.IDCategorie)
                 .OnDelete(DeleteBehavior.Restrict);
 
 
+        
             modelBuilder.Entity<Emprunts>()
                 .HasOne(e => e.Usager)  
                 .WithMany(u => u.Emprunts)  
                 .HasForeignKey(e => e.IDUsager)  
-                .OnDelete(DeleteBehavior.Cascade);  
+                .OnDelete(DeleteBehavior.Cascade);
 
-
+            //OnDelete(DeleteBehavior.Restrict) : Un livre ne peut pas être supprimé s'il est emprunté.
             modelBuilder.Entity<Emprunts>()
                 .HasOne(e => e.Livre) 
                 .WithMany(l => l.Emprunts)  
@@ -45,6 +56,28 @@ namespace GestBibliotheque.Donnee
                .WithOne(e => e.Retours)
                .HasForeignKey<Retours>(r => r.IDEmprunt)
                .OnDelete(DeleteBehavior.Cascade);
+
+
+            // Configurer la relation 1:1 entre Emprunts et Reservations
+            modelBuilder.Entity<Emprunts>()
+                .HasOne(e => e.Reservation) 
+                .WithOne(r => r.Emprunt)    
+                .HasForeignKey<Emprunts>(e => e.IDReservation)  
+                .OnDelete(DeleteBehavior.Restrict); 
+
+            // Configurer la relation entre Livre et Reservation
+            modelBuilder.Entity<Reservations>()
+                .HasOne(r => r.Livre)
+                .WithMany(l => l.Reservations)
+                .HasForeignKey(r => r.IDLivre)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Configurer la relation entre Usager et Reservation
+            modelBuilder.Entity<Reservations>()
+                .HasOne(r => r.Usager)
+                .WithMany(u => u.Reservations)
+                .HasForeignKey(r => r.IDUsager)
+                .OnDelete(DeleteBehavior.Restrict);
 
         }
     }
