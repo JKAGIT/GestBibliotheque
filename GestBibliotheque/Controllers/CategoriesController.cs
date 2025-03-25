@@ -17,7 +17,6 @@ namespace GestBibliotheque.Controllers
             _livresService = livresService;
         }
 
-
         private async Task<Categories> ObtenirCategorie(Guid id)
         {
             var categorie = await _categoriesService.ObtenirCategorieParId(id);
@@ -45,7 +44,6 @@ namespace GestBibliotheque.Controllers
             return View();
         }
 
-
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Ajouter(Categories categorie)
@@ -61,7 +59,6 @@ namespace GestBibliotheque.Controllers
                 {
                     GestionErreurs.GererErreur(ex, this);
                 }
-
             }
             return View(categorie);
         }
@@ -118,6 +115,5 @@ namespace GestBibliotheque.Controllers
                 return View("Supprimer", categorie);
             }
         }
-
     }
 }

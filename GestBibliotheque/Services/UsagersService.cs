@@ -1,5 +1,6 @@
 ﻿using GestBibliotheque.Models;
 using GestBibliotheque.Repositories;
+using GestBibliotheque.Utilitaires;
 
 namespace GestBibliotheque.Services
 {
@@ -14,13 +15,10 @@ namespace GestBibliotheque.Services
 
         public async Task AjouterUsager(Usagers usager)
         {
-            if (usager == null)
-                throw new ArgumentNullException(nameof(usager), "L'usager ne peut pas être nul.");
+            ValidationService.VerifierNull(usager, nameof(usager), "L'usager");
 
-            var usagerExistant = await _unitOfWork.Usagers.FindAsync(u => u.Courriel == usager.Courriel);
-            if (usagerExistant.Any())
-                throw new InvalidOperationException($"Un usager avec l'email {usager.Courriel} existe déjà.");
-
+            if (await _unitOfWork.Usagers.EntiteExiste(u => u.Courriel == usager.Courriel))
+                throw new InvalidOperationException(string.Format(ErreurMessage.EntiteExisteDeja, "Un usager", usager.Courriel));
 
             await _unitOfWork.Usagers.AddAsync(usager);
             await _unitOfWork.CompleteAsync();
@@ -28,12 +26,10 @@ namespace GestBibliotheque.Services
 
         public async Task ModifierUsager(Usagers usager)
         {
-            if (usager == null)
-                throw new ArgumentNullException(nameof(usager), "L'usager à modifier ne peut pas être nul.");
+            ValidationService.VerifierNull(usager, nameof(usager), "L'usager");
 
             var usagerAModifier = await _unitOfWork.Usagers.GetByIdAsync(usager.ID);
-            if (usagerAModifier == null)
-                throw new KeyNotFoundException($"L'usager avec l'ID {usager.ID} n'a pas été trouvé.");
+            ValidationService.EnregistrementNonTrouve(usagerAModifier, "Usagers", usager.ID);
 
             await _unitOfWork.Usagers.UpdateAsync(usager);
             await _unitOfWork.CompleteAsync();
@@ -42,13 +38,11 @@ namespace GestBibliotheque.Services
         public async Task SupprimerUsager(Guid idUsager)
         {
             var usagerASupprimer = await _unitOfWork.Usagers.GetByIdAsync(idUsager);
-            if (usagerASupprimer == null)
-                throw new KeyNotFoundException($"L'usager avec l'ID {idUsager} n'a pas été trouvé.");
+            ValidationService.EnregistrementNonTrouve(usagerASupprimer, "Usagers", idUsager);
 
             var empruntsActifs = await _unitOfWork.Emprunts.FindAsync(e => e.IDUsager == idUsager && e.Retours == null);
             if (empruntsActifs.Any())
-                throw new InvalidOperationException("L'usager ne peut pas être supprimé tant qu'il a des emprunts actifs.");
-
+                throw new InvalidOperationException(string.Format(ErreurMessage.ErreurSuppressionEntiteLiee, "un usager", "emprunts actifs"));
 
             await _unitOfWork.Usagers.DeleteAsync(usagerASupprimer);
             await _unitOfWork.CompleteAsync();
@@ -57,14 +51,20 @@ namespace GestBibliotheque.Services
         public async Task<Usagers> ObtenirUsagerParId(Guid idUsager)
         {
             var usager = await _unitOfWork.Usagers.GetByIdAsync(idUsager);
-            if (usager == null)
-                throw new KeyNotFoundException($"L'usager avec l'ID {idUsager} n'a pas été trouvé.");
+            ValidationService.EnregistrementNonTrouve(usager, "Usagers", idUsager);
             return usager;
         }
 
         public async Task<IEnumerable<Usagers>> ObtenirUsagers()
         {
-            return await _unitOfWork.Usagers.GetAllAsync();
+            try
+            {
+                return await _unitOfWork.Usagers.GetAllAsync();
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(string.Format(ErreurMessage.ErreurRecherche, "Usagers"), ex);
+            }
         }
     }
 }

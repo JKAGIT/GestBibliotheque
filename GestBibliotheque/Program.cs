@@ -1,12 +1,25 @@
 using GestBibliotheque.Donnee;
 using GestBibliotheque.Repositories;
 using GestBibliotheque.Services;
+using GestBibliotheque.Utilitaires;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Migrations;
+using Microsoft.Extensions.Logging;
 using Microsoft.Identity.Web;
+using Serilog;
+using Serilog.Events;
+using Serilog.Sinks.File;
+using Microsoft.Extensions.Configuration;
+
 
 var builder = WebApplication.CreateBuilder(args);
+// Configure Serilog
+Log.Logger = new LoggerConfiguration()
+    .ReadFrom.Configuration(builder.Configuration) 
+    .CreateLogger();
+builder.Host.UseSerilog(); 
+
 
 builder.Services.AddDbContext<GestBibliothequeDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("GestBibliothequeDbConnect")));
@@ -21,14 +34,10 @@ builder.Services.AddScoped<GenerateurMatriculeUnique>();
 builder.Services.AddScoped<UsagersService>();
 builder.Services.AddScoped<EmpruntsService>();
 builder.Services.AddScoped<RetoursService>();
+builder.Services.AddScoped<ReservationsService>();
 
 builder.Services.AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme)
     .AddMicrosoftIdentityWebApp(builder.Configuration.GetSection("AzureAd"));
-
-//builder.Services.AddAuthorization(options =>
-//{
-//    options.FallbackPolicy = options.DefaultPolicy;
-//});
 
 
 // Add services to the container.
@@ -58,14 +67,5 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}")
     .WithStaticAssets();
-
-
-//app.MapControllerRoute(
-//    name: "default",
-//    pattern: "{controller=Categories}/{action=Index}/{id?}")
-//    .WithStaticAssets();
-
-
-
 
 app.Run();

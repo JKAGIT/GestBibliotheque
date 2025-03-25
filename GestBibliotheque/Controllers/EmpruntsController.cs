@@ -13,13 +13,15 @@ namespace GestBibliotheque.Controllers
         private readonly UsagersService _usagersService;
         private readonly LivresService _livresService;
         private readonly RetoursService _retoursService;
+        private readonly ReservationsService _reservationsService;
 
-        public EmpruntsController(EmpruntsService empruntsService, UsagersService usagersService, LivresService livresService, RetoursService retoursService)
+        public EmpruntsController(EmpruntsService empruntsService, UsagersService usagersService, LivresService livresService, RetoursService retoursService, ReservationsService reservationsService)
         {
             _empruntsService = empruntsService;
             _usagersService = usagersService;
             _livresService = livresService;
             _retoursService = retoursService;
+            _reservationsService = reservationsService;
         }
         public async Task<IActionResult> Index()
         {
@@ -45,13 +47,11 @@ namespace GestBibliotheque.Controllers
             return View(emprunt);
         }
 
-
         public async Task<IActionResult> Ajouter()
         {
             await RemplirViewBags();
             return View();
-        }         
-       
+        }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -73,6 +73,71 @@ namespace GestBibliotheque.Controllers
             await RemplirViewBags();
             return View(emprunts);
         }
+
+
+        [HttpGet]
+        public async Task<IActionResult> EmprunterViaReservation(Guid idReservation)
+        {
+            var reservation = await _reservationsService.ObtenirReservationParId(idReservation);
+
+            if (reservation == null || reservation.Livre == null || reservation.Usager == null)
+            {
+                return NotFound();
+            }
+
+            // Construire le modèle de vue avec les données de la réservation
+            var model = new ReservationViewModel
+            {
+                IdReservation = reservation.ID,
+                IdLivre = reservation.IDLivre,
+                IdUsager = reservation.IDUsager,
+                LivreTitre = reservation.Livre.Titre, // Titre du livre associé
+                UsagerNom = $"{reservation.Usager.Nom} {reservation.Usager.Prenoms}", // Nom complet de l'usager
+                DateDebut = reservation.DateDebut,
+                DatePrevue = reservation.DateRetourEstimee,
+                Livres = new List<SelectListItem>
+                {
+                    new SelectListItem
+                    {
+                        Value = reservation.Livre.ID.ToString(),
+                        Text = reservation.Livre.Titre
+                    }
+                },
+                        Usagers = new List<SelectListItem>
+                {
+                    new SelectListItem
+                    {
+                        Value = reservation.Usager.ID.ToString(),
+                        Text = $"{reservation.Usager.Nom} {reservation.Usager.Prenoms}"
+                    }
+                }
+                    };
+
+            return View(model);
+        }
+
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EmprunterViaReservation(ReservationViewModel model)
+        {
+            if (ModelState.IsValid)
+            {
+                try
+                {
+                    await _empruntsService.AjouterEmpruntReservation(model.IdReservation);
+                    return RedirectToAction("Index", "Emprunts");
+                }
+                catch (Exception ex)
+                {
+                    ModelState.AddModelError("", $"Une erreur est survenue lors de l'emprunt : {ex.Message}");
+                }
+            }
+
+            return View(model);
+        }
+
+
 
         public async Task<IActionResult> Modifier(Guid id)
         {

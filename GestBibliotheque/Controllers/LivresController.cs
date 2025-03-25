@@ -117,8 +117,9 @@ namespace GestBibliotheque.Controllers
             catch (Exception ex)
             {
                 GestionErreurs.GererErreur(ex, this);
+                var livre = await _livresService.ObtenirLivreParId(id);
+                return View("Supprimer", livre);
             }
-            return RedirectToAction(nameof(Index));
         }
 
     }

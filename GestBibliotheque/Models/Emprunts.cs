@@ -24,5 +24,6 @@ namespace GestBibliotheque.Models
         public Guid IDLivre { get; set; }
         public Livres? Livre { get; set; }
         public virtual Retours? Retours { get; set; }
+        public virtual Reservations? Reservation { get; set; }
     }
 }

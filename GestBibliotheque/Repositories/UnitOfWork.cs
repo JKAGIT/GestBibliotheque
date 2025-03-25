@@ -12,7 +12,8 @@ namespace GestBibliotheque.Repositories
         private IGenericRepository<Utilisateurs> _utilisateurs;
         private IGenericRepository<Usagers> _usagers;
         private IGenericRepository<Emprunts> _emprunts;
-        private IGenericRepository<Retours> _retours;   
+        private IGenericRepository<Retours> _retours;
+        private IGenericRepository<Reservations> _reservations;
 
         public UnitOfWork(GestBibliothequeDbContext context)
         {
@@ -23,6 +24,7 @@ namespace GestBibliotheque.Repositories
             _usagers = new GenericRepository<Usagers>(_context);
             _emprunts = new GenericRepository<Emprunts>(_context);
             _retours = new GenericRepository<Retours>(_context);
+            _reservations = new GenericRepository<Reservations>(_context);
         }
         public IGenericRepository<Livres> Livres => _livres;
         public IGenericRepository<Categories> Categories => _categories;
@@ -30,6 +32,7 @@ namespace GestBibliotheque.Repositories
         public IGenericRepository<Usagers> Usagers =>_usagers;
         public IGenericRepository<Emprunts> Emprunts => _emprunts;
         public IGenericRepository<Retours> Retours =>_retours;
+        public IGenericRepository<Reservations> Reservations =>_reservations;
 
         public async Task<int> CompleteAsync()
         {

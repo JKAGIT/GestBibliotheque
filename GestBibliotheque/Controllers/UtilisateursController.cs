@@ -36,8 +36,6 @@ namespace GestBibliotheque.Controllers
         }
         public async Task<IActionResult> Ajouter()
         {
-            //var utilisateur = new Utilisateurs();          
-            //utilisateur.Matricule = await _generateurMatricule.GenererMatriculeUnique();
             var utilisateur = new Utilisateurs
             {
                 Matricule = await _generateurMatricule.GenererMatriculeUnique()

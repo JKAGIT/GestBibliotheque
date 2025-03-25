@@ -10,6 +10,7 @@ namespace GestBibliotheque.Repositories
         IGenericRepository<Usagers> Usagers { get; }
         IGenericRepository<Emprunts> Emprunts { get; }
         IGenericRepository<Retours> Retours { get; }
+        IGenericRepository<Reservations> Reservations { get; }
         Task<int> CompleteAsync();
     }
 }
