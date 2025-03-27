@@ -9,10 +9,12 @@ namespace GestBibliotheque.Services
     public class GenerateurMatriculeUnique
     {
         private readonly IUnitOfWork _unitOfWork;
+        private readonly IRecherche<Utilisateurs> _recherche;
 
-        public GenerateurMatriculeUnique(IUnitOfWork unitOfWork)
+        public GenerateurMatriculeUnique(IUnitOfWork unitOfWork, IRecherche<Utilisateurs> recherche)
         {
             _unitOfWork = unitOfWork;
+            _recherche = recherche;
         }
 
         public async Task<string> GenererMatriculeUnique()
@@ -24,7 +26,7 @@ namespace GestBibliotheque.Services
                 do
                 {
                     matricule = GenererMatriculeAleatoire();
-                    var result = await _unitOfWork.Utilisateurs.FindAsync(u => u.Matricule == matricule);
+                    var result = await _recherche.FindAsync(u => u.Matricule == matricule);
                     matriculeExiste = result.Any();
                 }
                 while (matriculeExiste);
@@ -46,8 +48,6 @@ namespace GestBibliotheque.Services
             return matricule;
         }
 
-
     }
-
 }
 

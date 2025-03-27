@@ -1,21 +1,24 @@
 ﻿using GestBibliotheque.Models;
 using GestBibliotheque.Repositories;
 using GestBibliotheque.Utilitaires;
-using Microsoft.EntityFrameworkCore;
+using System.Linq.Expressions;
 
 namespace GestBibliotheque.Services
 {
-    public class EmpruntsService
+    public class EmpruntsService : IEmprunts
     {
         private readonly IUnitOfWork _unitOfWork;
-        private readonly LivresService _livresService;
+        private readonly IRecherche<Emprunts> _recherche;
+        private readonly ILivres _livresService;
 
-        public EmpruntsService(IUnitOfWork unitOfWork, LivresService livresService)
+        public EmpruntsService(IUnitOfWork unitOfWork, IRecherche<Emprunts> recherche, ILivres livresService)
         {
             _unitOfWork = unitOfWork;
+            _recherche = recherche;
             _livresService = livresService;
         }
-        public async Task AjouterEmprunt(Emprunts emprunt)
+
+        public async Task AddAsync(Emprunts emprunt)
         {
             ValidationService.VerifierNull(emprunt, nameof(emprunt), "L'emprunt");
 
@@ -23,6 +26,59 @@ namespace GestBibliotheque.Services
 
             await _unitOfWork.Emprunts.AddAsync(emprunt);
             await _unitOfWork.CompleteAsync();
+        }
+
+        public async Task UpdateAsync(Emprunts emprunt)
+        {
+            ValidationService.VerifierNull(emprunt, nameof(emprunt), "L'emprunt");
+
+            var empruntAModifier = await _unitOfWork.Emprunts.GetByIdAsync(emprunt.ID);
+            ValidationService.EnregistrementNonTrouve(empruntAModifier, "Emprunts", emprunt.ID);
+
+            await _unitOfWork.Emprunts.UpdateAsync(emprunt);
+            await _unitOfWork.CompleteAsync();
+        }
+
+        public async Task DeleteAsync(Guid idEmprunt)
+        {
+            var empruntASupprimer = await _unitOfWork.Emprunts.GetByIdAsync(idEmprunt);
+            ValidationService.EnregistrementNonTrouve(empruntASupprimer, "Emprunts", idEmprunt);
+
+            await _livresService.MettreAJourStock(empruntASupprimer.IDLivre, 1);
+            await _unitOfWork.Emprunts.DeleteAsync(idEmprunt);
+            await _unitOfWork.CompleteAsync();
+        }
+
+        public async Task<IEnumerable<Emprunts>> GetAllAsync()
+        {
+            try
+            {
+                return await _unitOfWork.Emprunts.GetAllAsync();
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(string.Format(ErreurMessage.ErreurRecherche, "Livres"), ex);
+            }
+        }
+
+        public async Task<Emprunts> GetByIdAsync(Guid idEmprunt)
+        {
+            var emprunt = await _unitOfWork.Emprunts.GetByIdAsync(idEmprunt);
+            ValidationService.EnregistrementNonTrouve(emprunt, "Emprunts", idEmprunt);
+
+            return emprunt;
+        }
+
+        public async Task<IEnumerable<Emprunts>> ObtenirEmpruntParUsager(Guid idUsager)
+        {
+            try
+            {
+                return await _recherche.FindAsync(e => e.IDUsager == idUsager);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(string.Format(ErreurMessage.ErreurRecherche, "Emprunts"), ex);
+            }
         }
 
         public async Task AjouterEmpruntReservation(Guid idReservation)
@@ -59,44 +115,5 @@ namespace GestBibliotheque.Services
             await _unitOfWork.Reservations.UpdateAsync(reservation);
             await _unitOfWork.CompleteAsync();
         }
-        public async Task ModifierEmprunt(Emprunts emprunt)
-        {
-            ValidationService.VerifierNull(emprunt, nameof(emprunt), "L'emprunt");
-
-            var empruntAModifier = await _unitOfWork.Emprunts.GetByIdAsync(emprunt.ID);
-            ValidationService.EnregistrementNonTrouve(empruntAModifier, "Emprunts", emprunt.ID);
-
-            await _unitOfWork.Emprunts.UpdateAsync(emprunt);
-            await _unitOfWork.CompleteAsync();
-        }
-        public async Task SupprimerEmprunt(Guid idEmprunt)
-        {
-            var empruntASupprimer = await _unitOfWork.Emprunts.GetByIdAsync(idEmprunt);
-            ValidationService.EnregistrementNonTrouve(empruntASupprimer, "Emprunts", idEmprunt);
-
-            await _livresService.MettreAJourStock(empruntASupprimer.IDLivre, 1);
-            await _unitOfWork.Emprunts.DeleteAsync(empruntASupprimer);
-            await _unitOfWork.CompleteAsync();
-        }
-
-        public async Task<Emprunts> ObtenirEmpruntParId(Guid idEmprunt)
-        {
-            var emprunt = await _unitOfWork.Emprunts.GetByIdAsync(idEmprunt);
-            ValidationService.EnregistrementNonTrouve(emprunt, "Emprunts", idEmprunt);
-
-            return emprunt;
-        }
-        public async Task<IEnumerable<Emprunts>> ObtenirEmpruntParUsager(Guid idUsager)
-        {
-            try
-            {
-                return await _unitOfWork.Emprunts.FindAsync(e => e.IDUsager == idUsager);
-            }
-            catch (Exception ex)
-            {
-                throw new Exception(string.Format(ErreurMessage.ErreurRecherche, "Emprunts"), ex);
-            }
-        }
-
     }
 }

@@ -1,5 +1,6 @@
 ﻿using AspNetCoreGeneratedDocument;
 using GestBibliotheque.Models;
+using GestBibliotheque.Repositories;
 using GestBibliotheque.Services;
 using GestBibliotheque.Utilitaires;
 using Microsoft.AspNetCore.Http;
@@ -9,12 +10,12 @@ namespace GestBibliotheque.Controllers
 {
     public class RetoursController : Controller
     {
-        private readonly RetoursService _retoursService;
-        private readonly EmpruntsService _empruntsService;
-        private readonly LivresService _livresService;
-        private readonly UsagersService _usagersService;
+        private readonly IRetours _retoursService;
+        private readonly IEmprunts _empruntsService;
+        private readonly ILivres _livresService;
+        private readonly IUsagers _usagersService;
 
-        public RetoursController(RetoursService retoursService, EmpruntsService empruntsService, LivresService livresService, UsagersService usagersService)
+        public RetoursController(IRetours retoursService, IEmprunts empruntsService, ILivres livresService, IUsagers usagersService)
         {
             _retoursService = retoursService;
             _empruntsService = empruntsService;
@@ -43,14 +44,14 @@ namespace GestBibliotheque.Controllers
         public async Task<IActionResult> Ajouter(Guid empruntId)
         {
 
-            var emprunt = await _empruntsService.ObtenirEmpruntParId(empruntId);
+            var emprunt = await _empruntsService.GetByIdAsync(empruntId);
             if (emprunt == null)
             {
                 return NotFound();
             }
 
-            var livre = await _livresService.ObtenirLivreParId(emprunt.IDLivre);
-            var usager = await _usagersService.ObtenirUsagerParId(emprunt.IDUsager);
+            var livre = await _livresService.GetByIdAsync(emprunt.IDLivre);
+            var usager = await _usagersService.GetByIdAsync(emprunt.IDUsager);
 
             if (livre == null || usager == null)
             {
@@ -78,7 +79,7 @@ namespace GestBibliotheque.Controllers
             {
                 try
                 {
-                    await _retoursService.AjouterRetour(retour);
+                    await _retoursService.AddAsync(retour);
                     return RedirectToAction("Index", "Emprunts");
                 }
                 catch (Exception ex)
@@ -86,9 +87,9 @@ namespace GestBibliotheque.Controllers
                     GestionErreurs.GererErreur(ex, this);
                 }
             }
-                var emprunt = await _empruntsService.ObtenirEmpruntParId(retour.IDEmprunt);
-                var livre = await _livresService.ObtenirLivreParId(emprunt.IDLivre);
-                var usager = await _usagersService.ObtenirUsagerParId(emprunt.IDUsager);
+                var emprunt = await _empruntsService.GetByIdAsync(retour.IDEmprunt);
+                var livre = await _livresService.GetByIdAsync(emprunt.IDLivre);
+                var usager = await _usagersService.GetByIdAsync(emprunt.IDUsager);
                 
                 var viewModel = new RetourViewModel
                 {
@@ -101,7 +102,7 @@ namespace GestBibliotheque.Controllers
 
         public async Task<IActionResult> Modifier(Guid id)
         {
-            var retour = await _retoursService.ObtenirRetourParId(id);
+            var retour = await _retoursService.GetByIdAsync(id);
             if (retour == null)
             {
                 return NotFound();
@@ -112,9 +113,9 @@ namespace GestBibliotheque.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Modifier(Guid id, DateTime nouvelleDateRetour)
+        public async Task<IActionResult> Modifier(Retours retours)
         {
-            if (nouvelleDateRetour == default)
+            if (retours.DateRetour == default)
             {
                 ModelState.AddModelError("", "La date de retour ne peut pas être invalide.");
                 return View();
@@ -122,7 +123,7 @@ namespace GestBibliotheque.Controllers
 
             try
             {
-                await _retoursService.ModifierRetour(id, nouvelleDateRetour);
+                await _retoursService.UpdateAsync(retours);
                 return RedirectToAction("Index", "Emprunts");
             }
             catch (Exception ex)

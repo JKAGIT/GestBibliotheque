@@ -1,4 +1,5 @@
 ﻿using GestBibliotheque.Models;
+using GestBibliotheque.Repositories;
 using GestBibliotheque.Services;
 using GestBibliotheque.Utilitaires;
 using Microsoft.AspNetCore.Http;
@@ -8,27 +9,24 @@ namespace GestBibliotheque.Controllers
 {
     public class UsagersController : Controller
     {
-        private readonly UsagersService _usagersService;
-        private readonly EmpruntsService _empruntsService;
-        private readonly RetoursService _retourService;
+        private readonly IUsagers _usagersService;
+        private readonly IRetours _retourService;
 
-        public UsagersController(UsagersService usagersService, EmpruntsService empruntsService, RetoursService retourService   )
+        public UsagersController(IUsagers usagersService, IRetours retourService)
         {
             _usagersService = usagersService;
-            _empruntsService = empruntsService;
             _retourService = retourService;
         }
 
         public async Task<IActionResult> Index()
         {
-            var usagers = await _usagersService.ObtenirUsagers();
+            var usagers = await _usagersService.GetAllAsync();
             return View(usagers);
         }
         public async Task<IActionResult> Details(Guid id)
         {
-            var usager = await _usagersService.ObtenirUsagerParId(id);
+            var usager = await _usagersService.GetByIdAsync(id);
             if (usager == null) return NotFound();
-
 
             var empruntsActifs = await _retourService.ObtenirEmpruntsActif(id);
 
@@ -43,8 +41,6 @@ namespace GestBibliotheque.Controllers
             };
 
             return View(viewModel);
-
-            //return View(usager);
         }
        
         public IActionResult Ajouter()
@@ -60,7 +56,7 @@ namespace GestBibliotheque.Controllers
             {
                 try
                 {
-                    await _usagersService.AjouterUsager(usager);
+                    await _usagersService.AddAsync(usager);
                     return RedirectToAction("Index");
                 }
                 catch (Exception ex)
@@ -73,7 +69,7 @@ namespace GestBibliotheque.Controllers
        
         public async Task<IActionResult> Modifier(Guid id)
         {
-            var usager = await _usagersService.ObtenirUsagerParId(id);
+            var usager = await _usagersService.GetByIdAsync(id);
             if (usager == null)
             {
                 return NotFound();
@@ -89,7 +85,7 @@ namespace GestBibliotheque.Controllers
             {
                 try
                 {
-                    await _usagersService.ModifierUsager(usager);
+                    await _usagersService.UpdateAsync(usager);
                     return RedirectToAction(nameof(Index));
                 }
                 catch (Exception ex)
@@ -102,7 +98,7 @@ namespace GestBibliotheque.Controllers
 
         public async Task<IActionResult> Supprimer(Guid id)
         {
-            var usager = await _usagersService.ObtenirUsagerParId(id);
+            var usager = await _usagersService.GetByIdAsync(id);
             if (usager == null)
             {
                 return NotFound();
@@ -117,133 +113,16 @@ namespace GestBibliotheque.Controllers
         {
             try
             {
-                await _usagersService.SupprimerUsager(id);
+                await _usagersService.DeleteAsync(id);
                 return RedirectToAction(nameof(Index));
             }
             catch (Exception ex)
             {
                 GestionErreurs.GererErreur(ex, this);
-                var usager = await _usagersService.ObtenirUsagerParId(id);
+                var usager = await _usagersService.GetByIdAsync(id);
                 return View("Supprimer", usager);
             }
         }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        //// GET: UsagersController
-        //public ActionResult Index()
-        //{
-        //    return View();
-        //}
-
-        //// GET: UsagersController/Details/5
-        //public ActionResult Details(int id)
-        //{
-        //    return View();
-        //}
-
-        //// GET: UsagersController/Create
-        //public ActionResult Create()
-        //{
-        //    return View();
-        //}
-
-        //// POST: UsagersController/Create
-        //[HttpPost]
-        //[ValidateAntiForgeryToken]
-        //public ActionResult Create(IFormCollection collection)
-        //{
-        //    try
-        //    {
-        //        return RedirectToAction(nameof(Index));
-        //    }
-        //    catch
-        //    {
-        //        return View();
-        //    }
-        //}
-
-        //// GET: UsagersController/Edit/5
-        //public ActionResult Edit(int id)
-        //{
-        //    return View();
-        //}
-
-        //// POST: UsagersController/Edit/5
-        //[HttpPost]
-        //[ValidateAntiForgeryToken]
-        //public ActionResult Edit(int id, IFormCollection collection)
-        //{
-        //    try
-        //    {
-        //        return RedirectToAction(nameof(Index));
-        //    }
-        //    catch
-        //    {
-        //        return View();
-        //    }
-        //}
-
-        //// GET: UsagersController/Delete/5
-        //public ActionResult Delete(int id)
-        //{
-        //    return View();
-        //}
-
-        //// POST: UsagersController/Delete/5
-        //[HttpPost]
-        //[ValidateAntiForgeryToken]
-        //public ActionResult Delete(int id, IFormCollection collection)
-        //{
-        //    try
-        //    {
-        //        return RedirectToAction(nameof(Index));
-        //    }
-        //    catch
-        //    {
-        //        return View();
-        //    }
-        //}
     }
 }

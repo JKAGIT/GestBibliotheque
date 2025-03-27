@@ -13,13 +13,6 @@ namespace GestBibliotheque.Models
         [Required]
         public DateTime DateRetourEstimee { get; set; }
 
-        public int Nbjours
-        {
-            get
-            {
-                return (DateRetourEstimee - DateDebut).Days;
-            }
-        }
         public bool Annuler { get; set; } 
 
         public Guid IDUsager { get; set; }

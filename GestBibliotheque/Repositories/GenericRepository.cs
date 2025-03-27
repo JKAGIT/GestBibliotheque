@@ -1,6 +1,8 @@
 ﻿using GestBibliotheque.Donnee;
+using GestBibliotheque.Services;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
+using System.Runtime;
 
 namespace GestBibliotheque.Repositories
 {
@@ -17,12 +19,7 @@ namespace GestBibliotheque.Repositories
         {
             return await _dbSet.ToListAsync();
         }
-
-        public IQueryable<T> GetAll() 
-        {
-            return _dbSet.AsQueryable();
-        }
-        public async Task<T> GetByIdAsync(Guid id)
+       public async Task<T> GetByIdAsync(Guid id)
         {
             return await _dbSet.FindAsync(id);
         }
@@ -30,7 +27,7 @@ namespace GestBibliotheque.Repositories
         {
             await _dbSet.AddAsync(entity);
         }
-     
+
         public async Task UpdateAsync(T entity)
         {
             var entry = _context.Entry(entity);
@@ -51,19 +48,17 @@ namespace GestBibliotheque.Repositories
 
         }
 
-        public async Task DeleteAsync(T entity)
+                public async Task DeleteAsync(Guid id)
         {
-            _dbSet.Remove(entity);
-        }
+            var entity = await _dbSet.FindAsync(id);
 
-        public async Task<IEnumerable<T>> FindAsync(Expression<Func<T, bool>> predicate)
-        {
-            return await _dbSet.Where(predicate).ToListAsync();
-        }
-       
-        public async Task<bool> EntiteExiste(Expression<Func<T, bool>> predicate)
-        {
-            return await _dbSet.AnyAsync(predicate);
+            if (entity != null)
+            {
+                _dbSet.Remove(entity);
+            }
+            else
+                ValidationService.EnregistrementNonTrouve(entity, typeof(T).Name, id);
         }
     }
 }
+

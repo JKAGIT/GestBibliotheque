@@ -1,4 +1,5 @@
 ﻿using GestBibliotheque.Models;
+using GestBibliotheque.Repositories;
 using GestBibliotheque.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -8,16 +9,16 @@ namespace GestBibliotheque.Controllers
 {
     public class LivresOperationsController : Controller
     {
-        private readonly LivresService _livresService;
+        private readonly ILivres _livresService;
 
-        public LivresOperationsController(LivresService livresService)
+        public LivresOperationsController(ILivres livresService)
         {
             _livresService = livresService;
         }
 
         private async Task ChargerLivres()
         {
-            var livres = await _livresService.ObtenirLivres();
+            var livres = await _livresService.GetAllAsync();
             ViewData["Livres"] = new SelectList(livres, "ID", "Titre");
         }
 

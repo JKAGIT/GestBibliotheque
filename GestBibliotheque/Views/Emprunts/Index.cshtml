@@ -38,6 +38,25 @@
         </tbody>
     </table>
 </div>
+<div class="pagination">
+    Page @ViewBag.PageActifs sur @ViewBag.TotalPagesActifs
+    @if (ViewBag.PageActifs > 1)
+    {
+        <a href="@Url.Action("Index", new { pageActifs = ViewBag.PageActifs - 1, pageInactifs = ViewBag.PageInactifs, pageSize = ViewBag.PageSize })" class="btn btn-secondary">
+            @Html.Raw("&lt;&lt;")
+        </a>
+    }
+
+    @if (ViewBag.PageActifs < ViewBag.TotalPagesActifs)
+    {
+        <a href="@Url.Action("Index", new { pageActifs = ViewBag.PageActifs + 1, pageInactifs = ViewBag.PageInactifs, pageSize = ViewBag.PageSize })" class="btn btn-secondary">
+            @Html.Raw("&gt;&gt;")
+        </a>
+    }
+</div>
+
+
+
 
 
 
@@ -67,4 +86,17 @@
             }
         </tbody>
     </table>
+</div>
+
+<div class="pagination">
+    Page @ViewBag.PageInactifs sur @ViewBag.TotalPagesInactifs
+    @if (ViewBag.PageInactifs > 1)
+    {
+        <a href="@Url.Action("Index", new { pageActifs = ViewBag.PageActifs, pageInactifs = ViewBag.PageInactifs - 1, pageSize = ViewBag.PageSize })" class="btn btn-secondary">@Html.Raw("&lt;&lt;")</a>
+    }
+
+    @if (ViewBag.PageInactifs < ViewBag.TotalPagesInactifs)
+    {
+        <a href="@Url.Action("Index", new { pageActifs = ViewBag.PageActifs, pageInactifs = ViewBag.PageInactifs + 1, pageSize = ViewBag.PageSize })" class="btn btn-secondary">@Html.Raw("&gt;&gt;")</a>
+    }
 </div>

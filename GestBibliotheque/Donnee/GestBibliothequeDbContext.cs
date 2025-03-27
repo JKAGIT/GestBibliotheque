@@ -23,12 +23,7 @@ namespace GestBibliotheque.Donnee
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            base.OnModelCreating(modelBuilder);
-              
-            ///HasOne(l => l.Categories) =un Livre est lié une seule catégorie associée. 
-            ///WithMany(c => c.Livres) : une catégorie peut être liée a plusieurs livres.
-            ///HasForeignKey(l => l.IDCategorie) : la clé étrangère de categorie dans livre.
-            ///OnDelete(DeleteBehavior.Restrict) : empêcher la suppression d'une categorie, si des livres sont associés  
+            base.OnModelCreating(modelBuilder);             
 
             modelBuilder.Entity<Livres>()
             .HasOne(l => l.Categories)
