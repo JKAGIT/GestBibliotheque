@@ -4,16 +4,16 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using GestBibliotheque.Utilitaires;
+using GestBibliotheque.Repositories;
 
 namespace GestBibliotheque.Controllers
 {
     public class LivresController : Controller
     {
-        private readonly LivresService _livresService;
-        private readonly CategoriesService _categoriesService;
+        private readonly ILivres _livresService;
+        private readonly ICategories _categoriesService;
 
-
-        public LivresController(LivresService livresService, CategoriesService categoriesService)
+        public LivresController(ILivres livresService, ICategories categoriesService)
         {
             _livresService = livresService;
             _categoriesService = categoriesService;
@@ -28,18 +28,14 @@ namespace GestBibliotheque.Controllers
         [HttpGet]
         public async Task<IActionResult> Details(Guid id)
         {
-            var livre = await _livresService.ObtenirLivreParId(id);
-            if (livre == null) return NotFound();
-            if (livre.Categories == null)
-            {
-                var categorie = await _categoriesService.ObtenirCategorieParId(livre.IDCategorie);
-                livre.Categories = categorie;
-            }
+            var livresAvecCategories = await _livresService.ObtenirLivresAvecCategories(id);
+            var livre = livresAvecCategories.FirstOrDefault(l => l.ID == id);
+            if (livre == null) return NotFound(); 
             return View(livre);
         }
         public async Task<IActionResult> AjouterAsync()
         {
-            var categories = await _categoriesService.ObtenirCategories();
+            var categories = await _categoriesService.GetAllAsync();
             ViewBag.Categories = categories;
             return View();
         }
@@ -52,7 +48,7 @@ namespace GestBibliotheque.Controllers
             {
                 try
                 {
-                    await _livresService.AjouterLivre(livre);
+                    await _livresService.AddAsync(livre);
                     return RedirectToAction(nameof(Index));
                 }
                 catch (Exception ex)
@@ -60,17 +56,17 @@ namespace GestBibliotheque.Controllers
                    GestionErreurs.GererErreur(ex, this);
                 }
             }
-            ViewBag.Categories = await _categoriesService.ObtenirCategories();
+            ViewBag.Categories = await _categoriesService.GetAllAsync();
             return View(livre);
         }
 
         public async Task<IActionResult> Modifier(Guid id)
         {
-            var livre = await _livresService.ObtenirLivreParId(id);
+            var livre = await _livresService.GetByIdAsync(id);
             if (livre == null) return NotFound();
 
 
-            var categories = await _categoriesService.ObtenirCategories();
+            var categories = await _categoriesService.GetAllAsync();
             ViewBag.Categories = new SelectList(categories, "ID", "Libelle", livre.IDCategorie);
 
             return View(livre);
@@ -84,7 +80,7 @@ namespace GestBibliotheque.Controllers
             {
                 try
                 {
-                    await _livresService.ModifierLivre(livre);
+                    await _livresService.UpdateAsync(livre);
                     return RedirectToAction(nameof(Index));
                 }
                 catch (Exception ex)
@@ -93,14 +89,14 @@ namespace GestBibliotheque.Controllers
                 }
             }
         
-            var categories = await _categoriesService.ObtenirCategories();
+            var categories = await _categoriesService.GetAllAsync();
             ViewBag.Categories = new SelectList(categories, "ID", "Libelle", livre.IDCategorie);
             return View(livre);
         }
 
         public async Task<IActionResult> Supprimer(Guid id)
         {
-            var livre = await _livresService.ObtenirLivreParId(id);
+            var livre = await _livresService.GetByIdAsync(id);
             if (livre == null) return NotFound();
             return View(livre);
         }
@@ -111,13 +107,13 @@ namespace GestBibliotheque.Controllers
         {
             try
             {
-                await _livresService.SupprimerLivre(id);
+                await _livresService.DeleteAsync(id);
                 return RedirectToAction(nameof(Index));
             }
             catch (Exception ex)
             {
                 GestionErreurs.GererErreur(ex, this);
-                var livre = await _livresService.ObtenirLivreParId(id);
+                var livre = await _livresService.GetByIdAsync(id);
                 return View("Supprimer", livre);
             }
         }

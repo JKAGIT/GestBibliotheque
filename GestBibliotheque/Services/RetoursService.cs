@@ -5,28 +5,31 @@ using Microsoft.EntityFrameworkCore;
 
 namespace GestBibliotheque.Services
 {
-    public class RetoursService
+    public class RetoursService : IRetours
     {
-        private readonly IUnitOfWork _unitOfWork;
-        private readonly EmpruntsService _empruntsService;
-        private readonly LivresService _livresService;
-        private readonly UsagersService _usagersService;
 
-        public RetoursService(IUnitOfWork unitOfWork, LivresService livresService, EmpruntsService empruntsService, UsagersService usagersService)
+        private readonly IUnitOfWork _unitOfWork;
+        private readonly IEmprunts _empruntsService;
+        private readonly ILivres _livresService;
+        private readonly IRecherche<Retours> _rechercheRetour;
+        private readonly IRecherche<Emprunts> _rechercheEmprunt;
+
+        public RetoursService(IUnitOfWork unitOfWork, ILivres livresService, IEmprunts empruntsService, IRecherche<Emprunts> rechercheEmprunt, IRecherche<Retours> rechercheRetour)
         {
             _unitOfWork = unitOfWork;
             _empruntsService = empruntsService;
             _livresService = livresService;
-            _usagersService = usagersService;
+            _rechercheEmprunt = rechercheEmprunt;
+            _rechercheRetour = rechercheRetour;
         }
 
-        public async Task AjouterRetour(Retours retours)
+        public async Task AddAsync(Retours retours)
         {
             ValidationService.VerifierNull(retours, nameof(retours), "Le retour");
 
             ValidationService.VerifierDate(retours.DateRetour, "de retour");
 
-            var emprunt = await _empruntsService.ObtenirEmpruntParId(retours.IDEmprunt);
+            var emprunt = await _empruntsService.GetByIdAsync(retours.IDEmprunt);
             ValidationService.EnregistrementNonTrouve(emprunt, "Emprunts", retours.IDEmprunt);
 
             var retour = new Retours
@@ -39,31 +42,40 @@ namespace GestBibliotheque.Services
             await _unitOfWork.CompleteAsync();
         }
 
-        public async Task ModifierRetour(Guid Id, DateTime nouvelleDateRetour)
+        public async Task DeleteAsync(Guid id)
         {
-            ValidationService.VerifierDate(nouvelleDateRetour, "de retour");
-
-            var retour = await _unitOfWork.Retours.GetByIdAsync(Id);
-            ValidationService.EnregistrementNonTrouve(retour, "Retours", Id);
-
-            retour.DateRetour = nouvelleDateRetour;
-
-            await _unitOfWork.Retours.UpdateAsync(retour);
-            await _unitOfWork.CompleteAsync();
+            await _unitOfWork.Retours.DeleteAsync(id);
         }
 
-        public async Task<Retours> ObtenirRetourParId(Guid id)
+        public async Task<IEnumerable<Retours>> GetAllAsync()
+        {
+            return await _unitOfWork.Retours.GetAllAsync();
+        }
+
+        public async Task<Retours> GetByIdAsync(Guid id)
         {
             var retours = await _unitOfWork.Retours.GetByIdAsync(id);
             ValidationService.EnregistrementNonTrouve(retours, "Retours", id);
             return retours;
+        }
+        public async Task UpdateAsync(Retours retours)
+        {
+            ValidationService.VerifierDate(retours.DateRetour, "de retour");
+
+            var retour = await _unitOfWork.Retours.GetByIdAsync(retours.ID);
+            ValidationService.EnregistrementNonTrouve(retour, "Retours", retours.ID);
+
+           // retour.DateRetour = nouvelleDateRetour;
+
+            await _unitOfWork.Retours.UpdateAsync(retour);
+            await _unitOfWork.CompleteAsync();
         }
 
         public async Task<IEnumerable<RetourViewModel>> ObtenirEmpruntsActif(Guid? usagerId = null)
         {
             try
             {
-                var empruntsActifsQuery = _unitOfWork.Emprunts.GetAll()
+                var empruntsActifsQuery = _rechercheEmprunt.GetAll()
                     .Include(e => e.Livre)
                     .Include(e => e.Usager)
                     .Where(e => e.Retours == null);
@@ -97,7 +109,7 @@ namespace GestBibliotheque.Services
         {
             try
             {
-                var retours = await _unitOfWork.Retours.GetAll()
+                var retours = await _rechercheRetour.GetAll()
                     .Include(r => r.Emprunt)
                     .ThenInclude(e => e.Livre)
                     .Include(r => r.Emprunt.Usager)
@@ -145,5 +157,8 @@ namespace GestBibliotheque.Services
                 throw new Exception(string.Format(ErreurMessage.ErreurRecherche, "Emprunts"), ex);
             }
         }
+
+
+
     }
 }

@@ -9,10 +9,10 @@ namespace GestBibliotheque.Controllers
 {
     public class UtilisateursController : Controller
     {
-        private readonly UtilisateursService _utilisateursService;
+        private readonly IUtilisateurs _utilisateursService;
         private readonly GenerateurMatriculeUnique _generateurMatricule;
 
-        public UtilisateursController(UtilisateursService utilisateursService, GenerateurMatriculeUnique generateurMatricule)
+        public UtilisateursController(IUtilisateurs utilisateursService, GenerateurMatriculeUnique generateurMatricule)
         {
             _utilisateursService = utilisateursService;
             _generateurMatricule = generateurMatricule;
@@ -21,13 +21,13 @@ namespace GestBibliotheque.Controllers
         [HttpGet]
         public async Task<IActionResult> Index()
         {
-            var utilisateurs = await _utilisateursService.ObtenirUtilisateurs();
+            var utilisateurs = await _utilisateursService.GetAllAsync();
             return View(utilisateurs);
         }
 
         public async Task<IActionResult> Details(Guid id)
         {
-            var utilisateur = await _utilisateursService.ObtenirUtilisateurParId(id);
+            var utilisateur = await _utilisateursService.GetByIdAsync(id);
             if (utilisateur == null)
             {
                 return NotFound();
@@ -51,7 +51,7 @@ namespace GestBibliotheque.Controllers
             {
                 try
                 {
-                    await _utilisateursService.AjouterUtilisateur(utilisateur);
+                    await _utilisateursService.AddAsync(utilisateur);
                     return RedirectToAction(nameof(Index));
                 }
                 catch (Exception ex)
@@ -59,13 +59,13 @@ namespace GestBibliotheque.Controllers
                     GestionErreurs.GererErreur(ex, this);
                 }
             }
-            ViewBag.Utilisateurs = await _utilisateursService.ObtenirUtilisateurs();
+            ViewBag.Utilisateurs = await _utilisateursService.GetAllAsync();
             return View(utilisateur);
         }
 
         public async Task<IActionResult> Modifier(Guid id)
         {
-            var utilisateur = await _utilisateursService.ObtenirUtilisateurParId(id);
+            var utilisateur = await _utilisateursService.GetByIdAsync(id);
             if (utilisateur == null)
             {
                 return NotFound(); 
@@ -81,7 +81,7 @@ namespace GestBibliotheque.Controllers
             {
                 try
                 {
-                    await _utilisateursService.ModifierUtilisateur(utilisateur);
+                    await _utilisateursService.UpdateAsync(utilisateur);
                     return RedirectToAction(nameof(Index));
                 }
                 catch (Exception ex)
@@ -95,7 +95,7 @@ namespace GestBibliotheque.Controllers
 
         public async Task<IActionResult> Supprimer(Guid id)
         {
-            var utilisateur = await _utilisateursService.ObtenirUtilisateurParId(id);
+            var utilisateur = await _utilisateursService.GetByIdAsync(id);
             if (utilisateur == null)
             {
                 return NotFound();
@@ -110,7 +110,7 @@ namespace GestBibliotheque.Controllers
         {
             try
             {
-                await _utilisateursService.SupprimerUtilisateur(id);
+                await _utilisateursService.DeleteAsync(id);
                 return RedirectToAction(nameof(Index)); 
             }
             catch (Exception ex)

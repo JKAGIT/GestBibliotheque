@@ -1,40 +1,32 @@
 ﻿using GestBibliotheque.Models;
-using GestBibliotheque.Services;
+using GestBibliotheque.Repositories;
 using GestBibliotheque.Utilitaires;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace GestBibliotheque.Controllers
 {
     public class CategoriesController : Controller
     {
-        private readonly CategoriesService _categoriesService;
-        private readonly LivresService _livresService;
+        private readonly ICategories _categoriesService;
+        private readonly ILivres _livresService;
 
-        public CategoriesController(CategoriesService categoriesService, LivresService livresService)
+        public CategoriesController(ICategories categoriesService, ILivres livresService)
         {
             _categoriesService = categoriesService;
             _livresService = livresService;
-        }
+        }      
 
-        private async Task<Categories> ObtenirCategorie(Guid id)
+        public async Task<IActionResult> Index(int pageNumber = 1, int pageSize = 10)
         {
-            var categorie = await _categoriesService.ObtenirCategorieParId(id);
-            if (categorie == null) return null;
-            return categorie;
-        }
-
-        public async Task<IActionResult> Index()
-        {
-            var categories = await _categoriesService.ObtenirCategories();
-            return View(categories);
+            var paginatedResult = await _categoriesService.GetPagedAsync(pageNumber, pageSize);
+            return View(paginatedResult); // Passez PaginatedResult au modèle de vue
         }
         public async Task<IActionResult> Details(Guid id)
         {
             var categories = await ObtenirCategorie(id);
             if (categories == null) return NotFound();
 
-            var livres = await _livresService.ObtenirLivresParCategorie(id);
+            var livres = await _livresService.ObtenirLivresParCategorie(id);  
             categories.Livres = livres.ToList();
 
             return View(categories);
@@ -52,7 +44,7 @@ namespace GestBibliotheque.Controllers
             {
                 try
                 {
-                    await _categoriesService.AjouterCategorie(categorie);
+                    await _categoriesService.AddAsync(categorie);
                     return RedirectToAction("Index");
                 }
                 catch (Exception ex)
@@ -65,7 +57,7 @@ namespace GestBibliotheque.Controllers
 
         public async Task<IActionResult> Modifier(Guid id)
         {
-            var categorie = await ObtenirCategorie(id);
+            var categorie = await ObtenirCategorie(id); ;
             if (categorie == null) return NotFound();
             return View(categorie);
         }
@@ -78,7 +70,7 @@ namespace GestBibliotheque.Controllers
             {
                 try
                 {
-                    await _categoriesService.ModifierCategorie(categorie);
+                    await _categoriesService.UpdateAsync(categorie);
                     return RedirectToAction("Index");
                 }
                 catch (Exception ex)
@@ -105,15 +97,31 @@ namespace GestBibliotheque.Controllers
         {
             try
             {
-                await _categoriesService.SupprimerCategorie(id);
+                await _categoriesService.DeleteAsync(id);
                 return RedirectToAction(nameof(Index));
             }
             catch (Exception ex)
             {
                 GestionErreurs.GererErreur(ex, this);
-                var categorie = await ObtenirCategorie(id);
+                var categorie = await ObtenirCategorie(id); ;
                 return View("Supprimer", categorie);
             }
         }
+        #region Méthodes privées
+        private async Task<Categories> ObtenirCategorie(Guid id)
+        {
+            try
+            {
+                var categorie = await _categoriesService.GetByIdAsync(id);
+            if (categorie == null) return null;
+            return categorie;
+            }
+            catch (Exception ex)
+            {
+                GestionErreurs.GererErreur(ex, this);
+                return null;
+            }
+        }
+        #endregion
     }
 }

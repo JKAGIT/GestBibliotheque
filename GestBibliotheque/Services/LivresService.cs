@@ -1,33 +1,38 @@
 ﻿using GestBibliotheque.Models;
 using GestBibliotheque.Repositories;
-using GestBibliotheque.Services;
 using GestBibliotheque.Utilitaires;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Linq.Expressions;
 
 namespace GestBibliotheque.Services
 {
-    public class LivresService
+    public class LivresService : ILivres
     {
         private readonly IUnitOfWork _unitOfWork;
+        private readonly IEntityValidationService<Livres> _entityValidationService;
+        private readonly IRecherche<Livres> _rechercheLivre;
+        private readonly IRecherche<Emprunts> _rechercheEmprunt;
 
-        public LivresService(IUnitOfWork unitOfWork)
+        public LivresService(IUnitOfWork unitOfWork, IEntityValidationService<Livres> entityValidationService, IRecherche<Livres> recherche, IRecherche<Emprunts> rechercheEmprunt)
         {
             _unitOfWork = unitOfWork;
+            _entityValidationService = entityValidationService;
+            _rechercheLivre = recherche;
+            _rechercheEmprunt = rechercheEmprunt;
         }
 
-        public async Task AjouterLivre(Livres livre)
+        public async Task AddAsync(Livres livre)
         {
             ValidationService.VerifierNull(livre, nameof(livre), "Le livre");
 
-            if (await _unitOfWork.Livres.EntiteExiste(l => l.Titre == livre.Titre))
+            if (await _entityValidationService.VerifierExistenceAsync(l => l.Titre == livre.Titre))
                 throw new InvalidOperationException(string.Format(ErreurMessage.EntiteExisteDeja, "Un livre", livre.Titre));
 
             await _unitOfWork.Livres.AddAsync(livre);
             await _unitOfWork.CompleteAsync();
-        }
+        } 
 
-        public async Task ModifierLivre(Livres livre)
+        public async Task UpdateAsync(Livres livre)
         {
             ValidationService.VerifierNull(livre, nameof(livre), "Le livre");
 
@@ -38,19 +43,15 @@ namespace GestBibliotheque.Services
             await _unitOfWork.CompleteAsync();
         }
 
-        public async Task SupprimerLivre(Guid idLivre)
+        public async Task DeleteAsync(Guid idLivre)
         {
-            var livreASupprimer = await _unitOfWork.Livres.GetByIdAsync(idLivre);
-            ValidationService.EnregistrementNonTrouve(livreASupprimer, "Livres", idLivre);
-
-            //Livre en prêt -- non rendu
-            var empruntsActifs = await _unitOfWork.Emprunts.FindAsync(e => e.IDLivre == idLivre && e.Retours == null);
+            var empruntsActifs = await _rechercheEmprunt.FindAsync(e => e.IDLivre == idLivre && e.Retours == null);
             if (empruntsActifs.Any())
             {
                 throw new InvalidOperationException(string.Format(ErreurMessage.ErreurSuppressionEntiteLiee, "un livre", "emprunts actifs"));
             }
 
-            await _unitOfWork.Livres.DeleteAsync(livreASupprimer);
+            await _unitOfWork.Livres.DeleteAsync(idLivre);
             await _unitOfWork.CompleteAsync();
         }
 
@@ -71,18 +72,17 @@ namespace GestBibliotheque.Services
             return livre != null && livre.Stock > 0;
         }
 
-        public async Task<Livres> ObtenirLivreParId(Guid idLivre)
+        public async Task<Livres> GetByIdAsync(Guid idLivre)
         {
             var livre = await _unitOfWork.Livres.GetByIdAsync(idLivre);
             ValidationService.EnregistrementNonTrouve(livre, "Livres", idLivre);
             return livre;
-
         }
         public async Task<IEnumerable<Livres>> ObtenirLivresParCategorie(Guid idCategorie)
         {
             try
             {
-                return await _unitOfWork.Livres.FindAsync(l => l.IDCategorie == idCategorie);
+                return await _rechercheLivre.FindAsync(l => l.IDCategorie == idCategorie);
             }
             catch (Exception ex)
             {
@@ -94,15 +94,15 @@ namespace GestBibliotheque.Services
         {
             try
             {
-                return await _unitOfWork.Livres.FindAsync(l => l.Stock > 0);
+                return await _rechercheLivre.FindAsync(l => l.Stock > 0);
             }
             catch (Exception ex)
             {
                 throw new Exception(string.Format(ErreurMessage.ErreurRecherche, "Livres"), ex);
             }
-
         }
-        public async Task<IEnumerable<Livres>> ObtenirLivres()  //lazy loading
+
+        public async Task<IEnumerable<Livres>> GetAllAsync()  //lazy loading
         {
             try
             {
@@ -114,21 +114,25 @@ namespace GestBibliotheque.Services
             }
         }
 
-        public async Task<IEnumerable<Livres>> ObtenirLivresAvecCategories()   //eager loading
+
+        public async Task<IEnumerable<Livres>> ObtenirLivresAvecCategories(Guid? id = null)
         {
             try
             {
-                return await _unitOfWork.Livres
-                    .GetAll()
-                    .Include(c => c.Categories)
-                    .ToListAsync();
+                IQueryable<Livres> query = _rechercheLivre.GetAll().Include(l => l.Categories);
+
+                if (id.HasValue)
+                {
+                    query = query.Where(l => l.ID == id.Value);
+                }
+
+                return await query.ToListAsync();  
             }
             catch (Exception ex)
             {
                 throw new Exception(string.Format(ErreurMessage.ErreurRecherche, "Livres"), ex);
             }
         }
-    }
+
+   }
 }
-
-

@@ -1,16 +1,10 @@
 using GestBibliotheque.Donnee;
 using GestBibliotheque.Repositories;
 using GestBibliotheque.Services;
-using GestBibliotheque.Utilitaires;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Migrations;
-using Microsoft.Extensions.Logging;
 using Microsoft.Identity.Web;
 using Serilog;
-using Serilog.Events;
-using Serilog.Sinks.File;
-using Microsoft.Extensions.Configuration;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -26,15 +20,18 @@ builder.Services.AddDbContext<GestBibliothequeDbContext>(options =>
 
 builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+builder.Services.AddScoped(typeof(IEntityValidationService<>), typeof(EntityValidationService<>));
+builder.Services.AddScoped(typeof(IRecherche<>), typeof(Recherche<>));
+builder.Services.AddScoped<ICategories, CategoriesService>();
+builder.Services.AddScoped<IEmprunts, EmpruntsService>();
+builder.Services.AddScoped<ILivres, LivresService>();
+builder.Services.AddScoped<IReservations,ReservationsService>();
+builder.Services.AddScoped<IUsagers, UsagersService>();
+builder.Services.AddScoped<IUtilisateurs,UtilisateursService>();
+builder.Services.AddScoped<IRetours, RetoursService>();
 
-builder.Services.AddScoped<CategoriesService>();
-builder.Services.AddScoped<LivresService>();
-builder.Services.AddScoped<UtilisateursService>();
+
 builder.Services.AddScoped<GenerateurMatriculeUnique>();
-builder.Services.AddScoped<UsagersService>();
-builder.Services.AddScoped<EmpruntsService>();
-builder.Services.AddScoped<RetoursService>();
-builder.Services.AddScoped<ReservationsService>();
 
 builder.Services.AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme)
     .AddMicrosoftIdentityWebApp(builder.Configuration.GetSection("AzureAd"));

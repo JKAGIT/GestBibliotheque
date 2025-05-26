@@ -18,7 +18,5 @@ namespace GestBibliotheque.Models
         public IEnumerable<SelectListItem>? Usagers { get; set; }
         public IEnumerable<SelectListItem>? Livres { get; set; }
 
-        public int Nbjours => (DatePrevue - DateDebut).Days;
-
     }
 }

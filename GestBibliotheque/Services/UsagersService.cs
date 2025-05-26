@@ -4,27 +4,53 @@ using GestBibliotheque.Utilitaires;
 
 namespace GestBibliotheque.Services
 {
-    public class UsagersService
+
+    public class UsagersService : IUsagers
     {
         private readonly IUnitOfWork _unitOfWork;
+        private readonly IEntityValidationService<Usagers> _entityValidationService;
+        private readonly IRecherche<Emprunts> _rechercheEmprunt;
 
-        public UsagersService(IUnitOfWork unitOfWork)
+        public UsagersService(IUnitOfWork unitOfWork, IEntityValidationService<Usagers> entityValidationService, IRecherche<Emprunts> recherche)
         {
             _unitOfWork = unitOfWork;
+            _entityValidationService = entityValidationService;
+            _rechercheEmprunt = recherche;
         }
 
-        public async Task AjouterUsager(Usagers usager)
+        public async Task AddAsync(Usagers usager)
         {
             ValidationService.VerifierNull(usager, nameof(usager), "L'usager");
 
-            if (await _unitOfWork.Usagers.EntiteExiste(u => u.Courriel == usager.Courriel))
+            if (await _entityValidationService.VerifierExistenceAsync(u => u.Courriel == usager.Courriel))
                 throw new InvalidOperationException(string.Format(ErreurMessage.EntiteExisteDeja, "Un usager", usager.Courriel));
 
             await _unitOfWork.Usagers.AddAsync(usager);
             await _unitOfWork.CompleteAsync();
         }
 
-        public async Task ModifierUsager(Usagers usager)
+        public async Task DeleteAsync(Guid idUsager)
+        {
+            var empruntsActifs = await _rechercheEmprunt.FindAsync(e => e.IDUsager == idUsager && e.Retours == null);
+
+            if (empruntsActifs.Any())
+                throw new InvalidOperationException(string.Format(ErreurMessage.ErreurSuppressionEntiteLiee, "un usager", "emprunts actifs"));
+
+            await _unitOfWork.Usagers.DeleteAsync(idUsager);
+            await _unitOfWork.CompleteAsync();
+        }
+
+
+        public async Task<IEnumerable<Usagers>> GetAllAsync()
+        {
+            return await _unitOfWork.Usagers.GetAllAsync();
+        }
+
+        public async Task<Usagers> GetByIdAsync(Guid id)
+        {
+            return await _unitOfWork.Usagers.GetByIdAsync(id);
+        }
+        public async Task UpdateAsync(Usagers usager)
         {
             ValidationService.VerifierNull(usager, nameof(usager), "L'usager");
 
@@ -34,37 +60,7 @@ namespace GestBibliotheque.Services
             await _unitOfWork.Usagers.UpdateAsync(usager);
             await _unitOfWork.CompleteAsync();
         }
-
-        public async Task SupprimerUsager(Guid idUsager)
-        {
-            var usagerASupprimer = await _unitOfWork.Usagers.GetByIdAsync(idUsager);
-            ValidationService.EnregistrementNonTrouve(usagerASupprimer, "Usagers", idUsager);
-
-            var empruntsActifs = await _unitOfWork.Emprunts.FindAsync(e => e.IDUsager == idUsager && e.Retours == null);
-            if (empruntsActifs.Any())
-                throw new InvalidOperationException(string.Format(ErreurMessage.ErreurSuppressionEntiteLiee, "un usager", "emprunts actifs"));
-
-            await _unitOfWork.Usagers.DeleteAsync(usagerASupprimer);
-            await _unitOfWork.CompleteAsync();
-        }
-
-        public async Task<Usagers> ObtenirUsagerParId(Guid idUsager)
-        {
-            var usager = await _unitOfWork.Usagers.GetByIdAsync(idUsager);
-            ValidationService.EnregistrementNonTrouve(usager, "Usagers", idUsager);
-            return usager;
-        }
-
-        public async Task<IEnumerable<Usagers>> ObtenirUsagers()
-        {
-            try
-            {
-                return await _unitOfWork.Usagers.GetAllAsync();
-            }
-            catch (Exception ex)
-            {
-                throw new Exception(string.Format(ErreurMessage.ErreurRecherche, "Usagers"), ex);
-            }
-        }
     }
+
+
 }

@@ -1,4 +1,5 @@
 ﻿using GestBibliotheque.Models;
+using GestBibliotheque.Repositories;
 using GestBibliotheque.Services;
 using GestBibliotheque.Utilitaires;
 using Microsoft.AspNetCore.Http;
@@ -9,13 +10,13 @@ namespace GestBibliotheque.Controllers
 {
     public class EmpruntsController : Controller
     {
-        private readonly EmpruntsService _empruntsService;
-        private readonly UsagersService _usagersService;
-        private readonly LivresService _livresService;
-        private readonly RetoursService _retoursService;
-        private readonly ReservationsService _reservationsService;
+        private readonly IEmprunts _empruntsService;
+        private readonly IUsagers _usagersService;
+        private readonly ILivres _livresService;
+        private readonly IRetours _retoursService;
+        private readonly IReservations _reservationsService;
 
-        public EmpruntsController(EmpruntsService empruntsService, UsagersService usagersService, LivresService livresService, RetoursService retoursService, ReservationsService reservationsService)
+        public EmpruntsController(IEmprunts empruntsService, IUsagers usagersService, ILivres livresService, IRetours retoursService, IReservations reservationsService)
         {
             _empruntsService = empruntsService;
             _usagersService = usagersService;
@@ -23,23 +24,36 @@ namespace GestBibliotheque.Controllers
             _retoursService = retoursService;
             _reservationsService = reservationsService;
         }
-        public async Task<IActionResult> Index()
+
+        public async Task<IActionResult> Index(int pageActifs = 1, int pageInactifs = 1, int pageSize = 5)
         {
             var empruntsActifs = await _retoursService.ObtenirEmpruntsActif();
             var empruntsInactifs = await _retoursService.ObtenirEmpruntsInActif();
 
+            var totalPagesActifs = (int)Math.Ceiling((double)empruntsActifs.Count() / pageSize);
+            var totalPagesInactifs = (int)Math.Ceiling((double)empruntsInactifs.Count() / pageSize);
+
+            ViewBag.PageActifs = pageActifs;
+            ViewBag.TotalPagesActifs = totalPagesActifs;
+
+            ViewBag.PageInactifs = pageInactifs;
+            ViewBag.TotalPagesInactifs = totalPagesInactifs;
+            ViewBag.PageSize = pageSize;
+
             var viewModel = new EmpruntsIndexViewModel
             {
-                EmpruntsActifs = empruntsActifs,
-                EmpruntsInactifs = empruntsInactifs
+                EmpruntsActifs = empruntsActifs.Skip((pageActifs - 1) * pageSize).Take(pageSize).ToList(),
+                EmpruntsInactifs = empruntsInactifs.Skip((pageInactifs - 1) * pageSize).Take(pageSize).ToList()
             };
 
             return View(viewModel);
         }
 
+
+
         public async Task<IActionResult> Details(Guid id)
         {
-            var emprunt = await _empruntsService.ObtenirEmpruntParId(id);
+            var emprunt = await _empruntsService.GetByIdAsync(id);
             if (emprunt == null) return NotFound();
 
             await ChargeAssociationEntite(emprunt);
@@ -61,7 +75,7 @@ namespace GestBibliotheque.Controllers
             {
                 try
                 {
-                    await _empruntsService.AjouterEmprunt(emprunts);
+                    await _empruntsService.AddAsync(emprunts);
                     return RedirectToAction(nameof(Index));
                 }
                 catch (Exception ex)
@@ -74,25 +88,24 @@ namespace GestBibliotheque.Controllers
             return View(emprunts);
         }
 
-
         [HttpGet]
         public async Task<IActionResult> EmprunterViaReservation(Guid idReservation)
         {
-            var reservation = await _reservationsService.ObtenirReservationParId(idReservation);
+            var reservation = await _reservationsService.GetByIdAsync(idReservation);
 
             if (reservation == null || reservation.Livre == null || reservation.Usager == null)
             {
                 return NotFound();
             }
 
-            // Construire le modèle de vue avec les données de la réservation
+            // modèle de vue avec les données de la réservation
             var model = new ReservationViewModel
             {
                 IdReservation = reservation.ID,
                 IdLivre = reservation.IDLivre,
                 IdUsager = reservation.IDUsager,
-                LivreTitre = reservation.Livre.Titre, // Titre du livre associé
-                UsagerNom = $"{reservation.Usager.Nom} {reservation.Usager.Prenoms}", // Nom complet de l'usager
+                LivreTitre = reservation.Livre.Titre, 
+                UsagerNom = $"{reservation.Usager.Nom} {reservation.Usager.Prenoms}", 
                 DateDebut = reservation.DateDebut,
                 DatePrevue = reservation.DateRetourEstimee,
                 Livres = new List<SelectListItem>
@@ -116,7 +129,6 @@ namespace GestBibliotheque.Controllers
             return View(model);
         }
 
-
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> EmprunterViaReservation(ReservationViewModel model)
@@ -137,11 +149,9 @@ namespace GestBibliotheque.Controllers
             return View(model);
         }
 
-
-
         public async Task<IActionResult> Modifier(Guid id)
         {
-            var emprunt = await _empruntsService.ObtenirEmpruntParId(id);
+            var emprunt = await _empruntsService.GetByIdAsync(id);
             if (emprunt == null) return NotFound();
 
             await RemplirViewBags();
@@ -157,7 +167,7 @@ namespace GestBibliotheque.Controllers
             {
                 try
                 {
-                    await _empruntsService.ModifierEmprunt(emprunt);
+                    await _empruntsService.UpdateAsync(emprunt);
                     return RedirectToAction(nameof(Index));
                 }
                 catch (Exception ex)
@@ -170,10 +180,9 @@ namespace GestBibliotheque.Controllers
             return View(emprunt);
         }
 
-
         public async Task<IActionResult> Supprimer(Guid id)
         {
-            var emprunt = await _empruntsService.ObtenirEmpruntParId(id);
+            var emprunt = await _empruntsService.GetByIdAsync(id);
             if (emprunt == null) return NotFound();
             return View(emprunt);
         }
@@ -183,7 +192,7 @@ namespace GestBibliotheque.Controllers
         {
             try
             {
-                await _empruntsService.SupprimerEmprunt(id);
+                await _empruntsService.DeleteAsync(id);
                 return RedirectToAction(nameof(Index));
             }
             catch (Exception ex)
@@ -195,10 +204,10 @@ namespace GestBibliotheque.Controllers
 
         #region Private Methods
 
-        // Remplir les ViewBags avec Usagers et Livres
+        //ViewBags avec Usagers et Livres pour les selections (combo)
         private async Task RemplirViewBags()
         {
-            var usagers = await _usagersService.ObtenirUsagers();
+            var usagers = await _usagersService.GetAllAsync();
             var livres = await _livresService.ObtenirLivresEnStock();
 
             ViewBag.Usagers = usagers.Select(u => new SelectListItem
@@ -219,12 +228,12 @@ namespace GestBibliotheque.Controllers
         {
             if (emprunt.Usager == null)
             {
-                emprunt.Usager = await _usagersService.ObtenirUsagerParId(emprunt.IDUsager);
+                emprunt.Usager = await _usagersService.GetByIdAsync(emprunt.IDUsager);
             }
 
             if (emprunt.Livre == null)
             {
-                emprunt.Livre = await _livresService.ObtenirLivreParId(emprunt.IDLivre);
+                emprunt.Livre = await _livresService.GetByIdAsync(emprunt.IDLivre);
             }
         }
 

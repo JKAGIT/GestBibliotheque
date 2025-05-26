@@ -1,36 +1,38 @@
-﻿using GestBibliotheque.Models;
+﻿
+using GestBibliotheque.Models;
 using GestBibliotheque.Repositories;
 using GestBibliotheque.Utilitaires;
 using Microsoft.EntityFrameworkCore;
 
 namespace GestBibliotheque.Services
 {
-    public class CategoriesService
+    public class CategoriesService : ICategories
     {
         private readonly IUnitOfWork _unitOfWork;
+        private readonly IEntityValidationService<Categories> _entityValidationService;
+        private readonly IRecherche<Categories> _recherche;
 
-        public CategoriesService(IUnitOfWork unitOfWork)
+        public CategoriesService(IUnitOfWork unitOfWork, IEntityValidationService<Categories> entityValidationService, IRecherche<Categories> recherche)
         {
             _unitOfWork = unitOfWork;
+            _entityValidationService = entityValidationService;
+            _recherche = recherche;
         }
 
-        public async Task AjouterCategorie(Categories categorie)
+
+        public async Task AddAsync(Categories categorie)
         {
             ValidationService.VerifierNull(categorie, nameof(categorie), "La catégorie");
-
-            if (await _unitOfWork.Categories.EntiteExiste(c => c.Code == categorie.Code))
+            if (await _entityValidationService.VerifierExistenceAsync(c => c.Code == categorie.Code))
                 throw new InvalidOperationException(string.Format(ErreurMessage.EntiteExisteDeja, "Une catégorie", categorie.Code));
-
-            // throw new Exception("Erreur simulée dans le service lors de l'ajout de la catégorie.");
 
             await _unitOfWork.Categories.AddAsync(categorie);
             await _unitOfWork.CompleteAsync();
-
         }
-        public async Task ModifierCategorie(Categories categorie)
+
+        public async Task UpdateAsync(Categories categorie)
         {
             ValidationService.VerifierNull(categorie, nameof(categorie), "La catégorie");
-
             var categorieAModifier = await _unitOfWork.Categories.GetByIdAsync(categorie.ID);
             ValidationService.EnregistrementNonTrouve(categorieAModifier, "Categories", categorie.ID);
 
@@ -38,23 +40,22 @@ namespace GestBibliotheque.Services
             await _unitOfWork.CompleteAsync();
         }
 
-        public async Task SupprimerCategorie(Guid idCategorie)
+        public async Task DeleteAsync(Guid idCategorie)
         {
-            var categorieASupprimer = await _unitOfWork.Categories
-                                            .GetAll()
-                                            .Include(c => c.Livres)
-                                            .FirstOrDefaultAsync(c => c.ID == idCategorie);
+            var categorieASupprimer = await _recherche.GetAll()
+                                                .Include(c => c.Livres)
+                                                .FirstOrDefaultAsync(c => c.ID == idCategorie);
 
             ValidationService.EnregistrementNonTrouve(categorieASupprimer, "Categories", idCategorie);
 
             if (categorieASupprimer.Livres != null && categorieASupprimer.Livres.Any())
                 throw new InvalidOperationException(string.Format(ErreurMessage.ErreurSuppressionEntiteLiee, "une catégorie", "livres"));
 
-            await _unitOfWork.Categories.DeleteAsync(categorieASupprimer);
+            await _unitOfWork.Categories.DeleteAsync(idCategorie);
             await _unitOfWork.CompleteAsync();
         }
 
-        public async Task<IEnumerable<Categories>> ObtenirCategories()
+        public async Task<IEnumerable<Categories>> GetAllAsync()
         {
             try
             {
@@ -65,13 +66,47 @@ namespace GestBibliotheque.Services
                 throw new Exception(string.Format(ErreurMessage.ErreurRecherche, "Categories"), ex);
             }
         }
+        /**************/
+        public async Task<PaginatedResult<Categories>> GetPagedAsync(int pageNumber, int pageSize)
+        {           
+            var query = _recherche.GetAll(); 
 
-        public async Task<Categories> ObtenirCategorieParId(Guid idCategorie)
+            var totalItems = await query.CountAsync(); 
+            var data = await query
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            return new PaginatedResult<Categories>
+            {
+                Data = data,
+                TotalItems = totalItems,
+                PageNumber = pageNumber,
+                PageSize = pageSize
+            };
+        }
+
+        /******************/
+
+        public async Task<Categories> GetByIdAsync(Guid idCategorie)
         {
             var categorie = await _unitOfWork.Categories.GetByIdAsync(idCategorie);
             ValidationService.EnregistrementNonTrouve(categorie, "Categories", idCategorie);
             return categorie;
         }
-    }
 
+        public async Task<Categories> ObtenirCategorieParCode(string code)
+        {
+            return await _recherche.GetAll().FirstOrDefaultAsync(c => c.Code == code);
+        }
+
+        public async Task<bool> VerifierExistenceDansLivres(Guid categorieId)
+        {
+            return await _recherche.GetAll()
+                     .Where(c => c.ID == categorieId)
+                    .SelectMany(c => c.Livres)
+                    .AnyAsync();
+        }     
+
+    }
 }
