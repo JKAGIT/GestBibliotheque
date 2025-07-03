@@ -14,8 +14,8 @@ FROM mcr.microsoft.com/dotnet/aspnet:9.0
 WORKDIR /app
 COPY --from=build /app .
 
-# Expose port that Render expects
-EXPOSE 10000
-ENV ASPNETCORE_URLS=http://+:10000
+# Configuration pour Render - utiliser la variable PORT fournie par Render
+ENV ASPNETCORE_URLS=http://+:$PORT
+ENV ASPNETCORE_ENVIRONMENT=Production
 
 ENTRYPOINT ["dotnet", "GestBibliotheque.dll"]
