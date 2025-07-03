@@ -12,7 +12,16 @@ var builder = WebApplication.CreateBuilder(args);
 Log.Logger = new LoggerConfiguration()
     .ReadFrom.Configuration(builder.Configuration) 
     .CreateLogger();
-builder.Host.UseSerilog(); 
+builder.Host.UseSerilog();
+
+
+// Configure le port dynamiquement (utile pour Render et Railway)
+var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.ListenAnyIP(int.Parse(port));
+});
+/////////////////////
 
 
 builder.Services.AddDbContext<GestBibliothequeDbContext>(options =>
